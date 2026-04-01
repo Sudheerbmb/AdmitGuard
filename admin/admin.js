@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(view + 'View').classList.add('active');
       
-      document.getElementById('viewTitle').textContent = item.textContent.trim();
+      const title = item.innerText.replace(item.querySelector('.icon')?.innerText || '', '').trim();
+      document.getElementById('viewTitle').textContent = title;
       
       // Secondary Renderers
       if (view === 'pipeline') renderPipeline();
