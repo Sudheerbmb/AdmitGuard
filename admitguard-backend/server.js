@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 require('dotenv').config();
 const Groq = require('groq-sdk');
+const { pipeline } = require('@xenova/transformers');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -41,6 +42,8 @@ const initDb = async () => {
   try {
     await pool.query(queryText);
     await pool.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS decision TEXT DEFAULT 'pending'`);
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS vector`);
+    await pool.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS rationale_vector vector(384)`);
     
     // Seed default rules if empty
     const res = await pool.query('SELECT count(*) FROM rules');
@@ -98,18 +101,35 @@ app.get('/api/submissions', async (req, res) => {
   }
 });
 
+// ── VECTOR UTILITIES ────────────────────────────────────────────────────────
+let embedder;
+const getEmbedding = async (text) => {
+  if (!embedder) embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  const result = await embedder(text, { pooling: 'mean', normalize: true });
+  return Array.from(result.data);
+};
+
 app.post('/api/submissions', async (req, res) => {
   const { id, timestamp, flagged, exceptions_used, fields, rationale } = req.body;
+  
+  // Create latent vector from all rationales
+  const fullRationaleString = Object.values(rationale || {}).join(' ');
+  let vector = null;
+  if (fullRationaleString.trim().length > 0) {
+    try { vector = await getEmbedding(fullRationaleString); } catch (e) { console.error('Vector Error', e); }
+  }
+
   const queryText = `
-    INSERT INTO submissions(candidate_id, timestamp, flagged, exceptions_used, fields, rationale, decision)
-    VALUES($1, $2, $3, $4, $5, $6, 'pending')
+    INSERT INTO submissions(candidate_id, timestamp, flagged, exceptions_used, fields, rationale, decision, rationale_vector)
+    VALUES($1, $2, $3, $4, $5, $6, 'pending', $7)
     RETURNING *;
   `;
-  const values = [id, timestamp, flagged, exceptions_used, JSON.stringify(fields), JSON.stringify(rationale)];
+  const values = [id, timestamp, flagged, exceptions_used, JSON.stringify(fields), JSON.stringify(rationale), vector ? `[${vector.join(',')}]` : null];
   try {
     const result = await pool.query(queryText, values);
     res.status(201).json(result.rows[0]);
   } catch (err) {
+    console.error('Save Error', err);
     res.status(500).json({ error: 'Failed to save' });
   }
 });
@@ -181,12 +201,24 @@ app.post('/api/analyze', async (req, res) => {
     let dataResults = [];
     if (plan.startsWith("SQL:")) {
       const sql = plan.replace("SQL:", "").trim().replace(/```sql|```/g, "");
-      console.log("🛡️ Executing AI-Generated SQL:", sql);
       try {
         const dbRes = await pool.query(sql);
         dataResults = dbRes.rows;
+      } catch (e) { console.error("SQL Failed", e); }
+    } else if (plan.includes("LATENT_ANALYSIS")) {
+      // 3. ACTUAL SEMANTIC SEARCH (RAG in Latent Space)
+      try {
+        const queryVector = await getEmbedding(query);
+        const searchRes = await pool.query(`
+          SELECT fields->>'name' as name, rationale, 1 - (rationale_vector <=> $1) as similarity
+          FROM submissions
+          WHERE rationale_vector IS NOT NULL
+          ORDER BY similarity DESC
+          LIMIT 3;
+        `, [`[${queryVector.join(',')}]`]);
+        dataResults = searchRes.rows;
       } catch (e) {
-        console.error("SQL Failed, falling back to context", e);
+        console.error("Semantic Search Failed", e);
       }
     }
 
