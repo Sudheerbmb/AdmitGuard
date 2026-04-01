@@ -6,8 +6,8 @@
   
   // If no user session, redirect to login immediately
   if (!user) {
-    if (window.location.pathname.indexOf('login.html') === -1) {
-      window.location.href = 'login.html';
+    if (window.location.pathname.indexOf('index.html') === -1) {
+      window.location.href = 'index.html';
     }
   } else {
     // If we have a user, handle UI integration once DOM is ready
@@ -34,7 +34,7 @@
         
         document.getElementById('logoutBtn').addEventListener('click', () => {
           sessionStorage.removeItem('admitguard_admin_user');
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';
         });
       }
     });
