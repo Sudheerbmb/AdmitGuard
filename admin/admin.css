@@ -447,3 +447,25 @@ input:focus { border-color: var(--accent); }
   background: #000; padding: 2px 6px; border-radius: 4px; font-family: 'Space Mono', monospace;
   font-size: 11px; color: var(--success);
 }
+
+.ai-deep-dive-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent); color: #000; font-weight: 700;
+  padding: 4px 10px; border-radius: 6px; font-size: 10px;
+  margin: 4px 0; cursor: pointer; transition: 0.2s;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+.ai-deep-dive-btn:hover {
+  transform: scale(1.05); filter: brightness(1.1);
+}
+
+/* FLASH HIGHLIGHT FOR MODAL */
+@keyframes flash-modal {
+  0% { box-shadow: 0 0 0px var(--accent); }
+  50% { box-shadow: 0 0 50px var(--accent); transform: scale(1.02); }
+  100% { box-shadow: 0 0 0px var(--accent); transform: scale(1); }
+}
+.modal.flash-highlight {
+  animation: flash-modal 0.8s ease-out;
+  border-color: var(--accent);
+}

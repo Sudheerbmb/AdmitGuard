@@ -615,7 +615,22 @@ async function askAiAssistant() {
     
     const data = await res.json();
     
-    // Parse response for simple markdown
+    // 4. SMART INTERACTION: Auto-find and "Flash" profile if an ID is detected
+    const idMatches = data.response.match(/\b\d{10,14}\b/g); // Find IDs (10-14 digits)
+    if (idMatches && idMatches.length === 1) {
+      const detectedId = parseInt(idMatches[0]);
+      const foundSub = allSubmissions.find(s => s.id === detectedId);
+      if (foundSub) {
+        setTimeout(() => {
+          showDetails(detectedId);
+          // Add a visual flash to the modal if possible
+          document.querySelector('.modal')?.classList.add('flash-highlight');
+          setTimeout(() => document.querySelector('.modal')?.classList.remove('flash-highlight'), 1000);
+        }, 800);
+      }
+    }
+
+    // Parse response for simple markdown and dynamic links
     aiDiv.innerHTML = formatAiResponse(data.response);
 
   } catch (err) {
@@ -626,9 +641,20 @@ async function askAiAssistant() {
 }
 
 function formatAiResponse(text) {
-  // Simple markdown-ish bold and list replacement
-  return text
+  let formatted = text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n\* (.*?)/g, '<br>• $1')
     .replace(/\n/g, '<br>');
+
+  // INJECT DYNAMIC DEEP DIVE LINKS
+  formatted = formatted.replace(/\b(\d{10,14})\b/g, (match) => {
+    const id = parseInt(match);
+    const exists = allSubmissions.some(s => s.id === id);
+    if (exists) {
+      return `<span class="ai-deep-dive-btn" onclick="showDetails(${id})">📂 VIEW PROFILE (${id})</span>`;
+    }
+    return match;
+  });
+
+  return formatted;
 }
