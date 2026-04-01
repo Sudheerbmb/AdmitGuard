@@ -10,25 +10,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadRules();
   await loadSubmissions();
 
+  // Navigation Logic
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const view = item.dataset.view;
+      if (!view) return;
+
+      document.querySelector('.nav-item.active').classList.remove('active');
+      item.classList.add('active');
+      
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(view + 'View').classList.add('active');
+      
+      document.getElementById('viewTitle').textContent = item.textContent.trim();
+      
+      // Secondary Renderers
+      if (view === 'pipeline') renderPipeline();
+      if (view === 'audit') renderDetailedLogs();
+      if (view === 'rules') renderRuleConfig();
+    });
+  });
+
   // Event Listeners
   document.getElementById('syncBtn').addEventListener('click', loadSubmissions);
   document.getElementById('searchInput').addEventListener('input', renderDashboard);
+  document.getElementById('logSearch')?.addEventListener('input', renderDetailedLogs);
   document.getElementById('filterSelect').addEventListener('change', renderDashboard);
   document.getElementById('exportBtn').addEventListener('click', exportFullReport);
   document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
   document.getElementById('piiToggleWrap').addEventListener('click', togglePII);
+  document.getElementById('saveRulesBtn')?.addEventListener('click', () => alert('Configuration Locked. (Backend integration required for persistence)'));
   document.getElementById('bulkApprove').addEventListener('click', () => bulkAction('approved'));
   document.getElementById('bulkReject').addEventListener('click', () => bulkAction('rejected'));
   document.getElementById('modalClose').addEventListener('click', () => document.getElementById('detailModal').classList.remove('active'));
-
-  // Sidebar navigation simulated
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-      document.querySelector('.nav-item.active').classList.remove('active');
-      item.classList.add('active');
-      document.getElementById('viewTitle').textContent = item.textContent.trim();
-    });
-  });
 });
 
 async function loadRules() {
@@ -314,6 +328,101 @@ function showDetails(id) {
 
   document.getElementById('modalContent').innerHTML = html;
   document.getElementById('detailModal').classList.add('active');
+}
+
+function renderPipeline() {
+  const containers = {
+    pending: document.getElementById('pipelinePending'),
+    flagged: document.getElementById('pipelineFlagged'),
+    approved: document.getElementById('pipelineApproved'),
+    rejected: document.getElementById('pipelineRejected')
+  };
+  
+  const counts = { pending: 0, flagged: 0, approved: 0, rejected: 0 };
+  
+  // Clear lists
+  Object.values(containers).forEach(c => c.innerHTML = '');
+  
+  allSubmissions.forEach(sub => {
+    let stage = sub.decision === 'pending' ? (sub.flagged ? 'flagged' : 'pending') : sub.decision;
+    counts[stage]++;
+    
+    const card = document.createElement('div');
+    card.className = 'pipeline-card';
+    card.onclick = () => showDetails(sub.id);
+    card.innerHTML = `
+      <div class="card-name">${sanitize(sub.fields?.name)}</div>
+      <div class="card-meta">
+        <span>ID: ${sub.id}</span>
+        ${sub.flagged ? '<span class="card-flag">⚠ FLAG</span>' : ''}
+      </div>
+    `;
+    containers[stage].appendChild(card);
+  });
+  
+  // Update counts
+  document.getElementById('countPending').textContent = counts.pending;
+  document.getElementById('countFlagged').textContent = counts.flagged;
+  document.getElementById('countApproved').textContent = counts.approved;
+  document.getElementById('countRejected').textContent = counts.rejected;
+}
+
+function renderDetailedLogs() {
+  const search = document.getElementById('logSearch')?.value.toLowerCase() || '';
+  const body = document.getElementById('fullLogBody');
+  if (!body) return;
+  
+  let data = allSubmissions.filter(s => 
+    s.id.toString().includes(search) || 
+    s.fields.email.toLowerCase().includes(search) ||
+    s.fields.name.toLowerCase().includes(search)
+  );
+  
+  body.innerHTML = data.map(sub => `
+    <tr>
+      <td style="font-family:monospace; font-size:10px;">${new Date(sub.timestamp).toLocaleString()}</td>
+      <td>${sub.id}</td>
+      <td><span class="badge ${sub.flagged ? 'badge-flagged' : 'badge-clean'}">${sub.flagged ? 'FLAGGED' : 'CLEAN'}</span></td>
+      <td>${sub.exceptions_used.length} Failures</td>
+      <td style="font-size:11px; color:var(--muted)">${Object.keys(sub.rationale || {}).join(', ')}</td>
+      <td><span class="badge badge-${sub.decision}">${sub.decision.toUpperCase()}</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderRuleConfig() {
+  const container = document.getElementById('rulesConfigContent');
+  if (!container) return;
+  
+  // Group rules for better UI
+  const groups = {
+    'Eligibility Thresholds': {
+      'Age (Minimum)': { val: RULES.age.min, key: 'age.min' },
+      'Age (Maximum)': { val: RULES.age.max, key: 'age.max' },
+      'Graduation Year (Start)': { val: RULES.graduation_year.min, key: 'grad.min' },
+      'CGPA (Minimum 10-point scale)': { val: RULES.cgpa.min, key: 'cgpa' }
+    },
+    'Compliance Settings': {
+      'Maximum Exceptions Allowed': { val: RULES.exception_limit, key: 'limit' },
+      'Rationale Minimum Length': { val: RULES.rationale_min_length, key: 'len' },
+      'PII Masking Enabled': { val: RULES.pii_masking, key: 'mask' }
+    }
+  };
+  
+  container.innerHTML = Object.entries(groups).map(([title, rules]) => `
+    <div class="rule-group">
+      <div class="panel-header" style="color:var(--text)">${title}</div>
+      ${Object.entries(rules).map(([name, data]) => `
+        <div class="rule-row">
+          <div class="rule-info">
+            <h4>${name}</h4>
+            <p>System enforcement key: ${data.key}</p>
+          </div>
+          <input type="text" class="rule-input" value="${data.val}">
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
 }
 
 function exportFullReport() {

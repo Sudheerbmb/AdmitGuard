@@ -149,6 +149,69 @@
     </div>
   </section>
 
+  <!-- ADMISSION PIPELINE -->
+  <section id="pipelineView" class="view">
+    <div class="pipeline-board">
+      <div class="pipeline-col">
+        <div class="col-header"><span>PENDING REVIEW</span> <span class="count" id="countPending">0</span></div>
+        <div id="pipelinePending"></div>
+      </div>
+      <div class="pipeline-col">
+        <div class="col-header"><span>FLAGGED / AT RISK</span> <span class="count" id="countFlagged">0</span></div>
+        <div id="pipelineFlagged"></div>
+      </div>
+      <div class="pipeline-col">
+        <div class="col-header"><span>APPROVED</span> <span class="count" id="countApproved">0</span></div>
+        <div id="pipelineApproved"></div>
+      </div>
+      <div class="pipeline-col">
+        <div class="col-header"><span>REJECTED</span> <span class="count" id="countRejected">0</span></div>
+        <div id="pipelineRejected"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAILED LOGS -->
+  <section id="auditView" class="view">
+    <div class="panel data-panel">
+      <div class="panel-header flex-header">
+        <span>System Audit Logs</span>
+        <div class="header-actions">
+          <input type="text" id="logSearch" placeholder="Search by Candidate ID or Email...">
+          <button class="btn secondary" onclick="exportFullReport()">Download All</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="auditTable">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Candidate ID</th>
+              <th>Status</th>
+              <th>Exceptions</th>
+              <th>Rationale Detail</th>
+              <th>Manager Decision</th>
+            </tr>
+          </thead>
+          <tbody id="fullLogBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- RULE CONFIG -->
+  <section id="rulesView" class="view">
+    <div class="rules-container">
+      <div class="panel-header">System Eligibility Rules</div>
+      <div id="rulesConfigContent">
+        <!-- Dynamic Form -->
+      </div>
+      <div class="rules-footer">
+        <button class="btn success" id="saveRulesBtn">LOCK & APPLY CHANGES</button>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <!-- MODALS -->
