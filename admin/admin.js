@@ -401,10 +401,6 @@ function renderDetailedLogs() {
       <td>${sub.exceptions_used.length} Failures</td>
       <td style="font-size:11px; color:var(--muted)">${Object.keys(sub.rationale || {}).join(', ')}</td>
       <td><span class="badge badge-${sub.decision}">${sub.decision.toUpperCase()}</span></td>
-      <td>
-        <button class="btn-sm approve" onclick="patchDecision(${sub.id}, 'approved')">Approve</button>
-        <button class="btn-sm reject" onclick="patchDecision(${sub.id}, 'rejected')" style="margin-left:4px;">Reject</button>
-      </td>
     </tr>
   `).join('');
 }
@@ -414,41 +410,82 @@ function renderRuleConfig() {
   if (!container) return;
   
   container.innerHTML = `
-    <div class="rule-group">
-      <div class="panel-header" style="color:var(--text)">CORE THRESHOLDS</div>
-      <div class="rule-row">
-        <div class="rule-info"><h4>Age Range</h4><p>Minimum and Maximum age allowed.</p></div>
-        <div>
-          <input type="number" id="rule-age-min" class="rule-input" value="${RULES.age.min}">
-          <input type="number" id="rule-age-max" class="rule-input" value="${RULES.age.max}">
+    <div class="rules-container">
+      <!-- SOFT RULES -->
+      <div class="rule-group">
+        <div class="panel-header" style="color:var(--accent)">SOFT RULES (Exceptions Allowed)</div>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:15px;">These rules trigger a 'Rationale' request but do not block the officer from submitting.</p>
+        
+        <div class="rule-row">
+          <div class="rule-info"><h4>Age Boundaries</h4><p>Allowed age range for candidates.</p></div>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="rule-age-min" class="rule-input" value="${RULES.age.min}" title="Min">
+            <input type="number" id="rule-age-max" class="rule-input" value="${RULES.age.max}" title="Max">
+          </div>
         </div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-info"><h4>Graduation Year</h4><p>Earliest and Latest year.</p></div>
-        <div>
-          <input type="number" id="rule-grad-min" class="rule-input" value="${RULES.graduation_year.min}">
-          <input type="number" id="rule-grad-max" class="rule-input" value="${RULES.graduation_year.max}">
-        </div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-info"><h4>Minimum Percentage</h4><p>Qualifying threshold.</p></div>
-        <input type="number" id="rule-perc" class="rule-input" value="${RULES.percentage.min}">
-      </div>
-      <div class="rule-row">
-        <div class="rule-info"><h4>Minimum CGPA</h4><p>Scaling factor (e.g. 6.0).</p></div>
-        <input type="number" id="rule-cgpa" class="rule-input" value="${RULES.cgpa.min}">
-      </div>
-    </div>
 
-    <div class="rule-group">
-      <div class="panel-header" style="color:var(--text)">SYSTEM COMPLIANCE</div>
-      <div class="rule-row">
-        <div class="rule-info"><h4>Exceptions Limit</h4><p>Auto-flag if > than this value.</p></div>
-        <input type="number" id="rule-limit" class="rule-input" value="${RULES.exception_limit}">
+        <div class="rule-row">
+          <div class="rule-info"><h4>Graduation Window</h4><p>Earliest and latest graduation years.</p></div>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="rule-grad-min" class="rule-input" value="${RULES.graduation_year.min}">
+            <input type="number" id="rule-grad-max" class="rule-input" value="${RULES.graduation_year.max}">
+          </div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-info"><h4>Academia Thresholds</h4><p>Min Percentage and CGPA (10-point scale).</p></div>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="rule-perc" class="rule-input" value="${RULES.percentage.min}" title="%">
+            <input type="number" id="rule-cgpa" class="rule-input" value="${RULES.cgpa.min}" title="CGPA">
+          </div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-info"><h4>Screening Score</h4><p>Minimum required to pass initial test.</p></div>
+          <input type="number" id="rule-score-min" class="rule-input" value="${RULES.screening_score.min}">
+        </div>
       </div>
-      <div class="rule-row">
-        <div class="rule-info"><h4>Rationale Min Length</h4><p>Character count minimum.</p></div>
-        <input type="number" id="rule-len" class="rule-input" value="${RULES.rationale_min_length}">
+
+      <!-- HARD RULES -->
+      <div class="rule-group">
+        <div class="panel-header" style="color:var(--error)">HARD RULES (Strict Blocks)</div>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:15px;">These rules block the 'SUBMIT' button entirely until fixed. No exceptions permitted.</p>
+        
+        <div class="rule-row">
+          <div class="rule-info"><h4>Aadhaar Verhoeff Check</h4><p>Use mathematical checksum to spot fake numbers.</p></div>
+          <select id="rule-aadhaar-sum" class="rule-input">
+            <option value="true" ${RULES.aadhaar_checksum ? 'selected' : ''}>ENABLED</option>
+            <option value="false" ${!RULES.aadhaar_checksum ? 'selected' : ''}>DISABLED</option>
+          </select>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-info"><h4>Email Whitelist</h4><p>Comma-separated allowed domains (e.g. google.com)</p></div>
+          <input type="text" id="rule-email-white" class="rule-input" style="width:200px;" value="${(RULES.email_whitelist || []).join(', ')}">
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-info"><h4>Block Interview Rejects</h4><p>Prevent submissions for 'Rejected' candidates.</p></div>
+          <span style="font-size:10px; color:var(--success); font-weight:bold;">ALWAYS FORCED</span>
+        </div>
+      </div>
+
+      <!-- COMPLIANCE -->
+      <div class="rule-group">
+        <div class="panel-header" style="color:var(--warn)">COMPLIANCE & AUDIT</div>
+        
+        <div class="rule-row">
+          <div class="rule-info"><h4>Exception Flagging Limit</h4><p>How many exceptions before candidate is FLAGGED.</p></div>
+          <input type="number" id="rule-limit" class="rule-input" value="${RULES.exception_limit}">
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-info"><h4>Rationale Requirement</h4><p>Min characters and list of mandatory keywords.</p></div>
+          <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+            <input type="number" id="rule-len" class="rule-input" value="${RULES.rationale_min_length}" placeholder="Min length">
+            <input type="text" id="rule-keywords" class="rule-input" style="width:250px;" value="${(RULES.exception_keywords || []).join(', ')}" placeholder="Keywords (comma separated)">
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -458,7 +495,8 @@ function renderRuleConfig() {
 
 async function saveRules() {
   const btn = document.getElementById('saveRulesBtn');
-  btn.textContent = 'SAVING CONFIG...';
+  const originalText = btn.textContent;
+  btn.textContent = 'DEPLOYING RULES...';
   btn.disabled = true;
 
   const newConfig = {
@@ -467,8 +505,12 @@ async function saveRules() {
     graduation_year: { min: parseInt(document.getElementById('rule-grad-min').value), max: parseInt(document.getElementById('rule-grad-max').value) },
     percentage: { min: parseInt(document.getElementById('rule-perc').value) },
     cgpa: { min: parseFloat(document.getElementById('rule-cgpa').value) },
+    screening_score: { ...RULES.screening_score, min: parseInt(document.getElementById('rule-score-min').value) },
+    aadhaar_checksum: document.getElementById('rule-aadhaar-sum').value === 'true',
+    email_whitelist: document.getElementById('rule-email-white').value.split(',').map(s => s.trim()).filter(s => s),
     exception_limit: parseInt(document.getElementById('rule-limit').value),
-    rationale_min_length: parseInt(document.getElementById('rule-len').value)
+    rationale_min_length: parseInt(document.getElementById('rule-len').value),
+    exception_keywords: document.getElementById('rule-keywords').value.split(',').map(s => s.trim()).filter(s => s)
   };
 
   try {
@@ -478,12 +520,16 @@ async function saveRules() {
       body: JSON.stringify({ config: newConfig })
     });
     if (res.ok) {
-      alert('Rules Synced Successfully! Chrome Extensions will follow new rules on next load.');
-      RULES = newConfig;
+      const data = await res.json();
+      RULES = data.config;
+      alert('SUCCESS: All system rules updated and deployed to Cloud.');
+    } else {
+      throw new Error();
     }
-  } catch (e) { alert('Failed to sync rules.'); }
-  finally {
-    btn.textContent = 'LOCK & APPLY CHANGES';
+  } catch (e) {
+    alert('ERROR: Could not save rules. Check backend connection.');
+  } finally {
+    btn.textContent = originalText;
     btn.disabled = false;
   }
 }

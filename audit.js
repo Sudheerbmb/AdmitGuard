@@ -128,17 +128,6 @@ function renderTable() {
     const excs = (sub.exceptions_used || []).map(e => `<span class="badge exception">${sanitize(e)}</span>`).join('');
     const statusBadge = sub.flagged ? `<span class="badge flagged">⚑ Flagged</span>` : `<span class="badge ok">✓ Clean</span>`;
     
-    let decisionUI = '';
-    if (sub.decision === 'pending') {
-      decisionUI = `
-        <div class="action-group">
-          <button class="action-btn approve-btn" onclick="event.stopPropagation(); makeDecision(${sub.id}, 'approved')">APPROVE</button>
-          <button class="action-btn reject-btn" onclick="event.stopPropagation(); makeDecision(${sub.id}, 'rejected')">REJECT</button>
-        </div>`;
-    } else {
-      decisionUI = `<span class="badge ${sub.decision}">${sub.decision.toUpperCase()}</span>`;
-    }
-
     return `
       <tr onclick="showDetail(${sub.id})" style="cursor:pointer">
         <td style="font-size:10px; color:var(--muted)">#${sub.id.toString().slice(-4)}</td>
@@ -148,7 +137,7 @@ function renderTable() {
         <td>${sanitize(mask(sub.fields?.phone, 'phone'))}</td>
         <td>${excs}</td>
         <td>${statusBadge}</td>
-        <td>${decisionUI}</td>
+        <td><span class="badge ${sub.decision}">${sub.decision.toUpperCase()}</span></td>
         <td style="text-align:right">→</td>
       </tr>`;
   }).join('');
