@@ -46,12 +46,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadRules() {
+  const fallbackUrl = 'https://admitguard.onrender.com';
   try {
-    const res = await fetch(chrome.runtime.getURL('rules.json'));
-    RULES = await res.json();
+    // Try to get rules from backend first
+    const res = await fetch(`${fallbackUrl}/api/rules`);
+    if (res.ok) {
+      RULES = await res.json();
+      RULES.api_url = fallbackUrl;
+    } else { throw new Error(); }
   } catch (e) {
-    console.error('Failed to load rules. Admin restricted.');
-    RULES = { api_url: 'https://admitguard.onrender.com' }; // Fallback
+    console.warn('Backend rules unreachable. Using local manifest.');
+    try {
+      const res = await fetch(chrome.runtime.getURL('rules.json'));
+      RULES = await res.json();
+    } catch (e2) {
+      RULES = { api_url: fallbackUrl, age: {min:18, max:35}, graduation_year: {min:2015, max:2025}, exception_limit: 2 };
+    }
   }
 }
 
@@ -75,7 +85,12 @@ async function loadSubmissions() {
       }));
       status.textContent = 'CONNECTED';
       status.style.color = 'var(--success)';
-      renderDashboard();
+      
+      // Refresh current view
+      const activeNav = document.querySelector('.nav-item.active').dataset.view;
+      if (activeNav === 'dashboard') renderDashboard();
+      else if (activeNav === 'pipeline') renderPipeline();
+      else if (activeNav === 'audit') renderDetailedLogs();
     }
   } catch (err) {
     status.textContent = 'OFFLINE';
@@ -386,6 +401,10 @@ function renderDetailedLogs() {
       <td>${sub.exceptions_used.length} Failures</td>
       <td style="font-size:11px; color:var(--muted)">${Object.keys(sub.rationale || {}).join(', ')}</td>
       <td><span class="badge badge-${sub.decision}">${sub.decision.toUpperCase()}</span></td>
+      <td>
+        <button class="btn-sm approve" onclick="patchDecision(${sub.id}, 'approved')">Approve</button>
+        <button class="btn-sm reject" onclick="patchDecision(${sub.id}, 'rejected')" style="margin-left:4px;">Reject</button>
+      </td>
     </tr>
   `).join('');
 }
@@ -394,35 +413,79 @@ function renderRuleConfig() {
   const container = document.getElementById('rulesConfigContent');
   if (!container) return;
   
-  // Group rules for better UI
-  const groups = {
-    'Eligibility Thresholds': {
-      'Age (Minimum)': { val: RULES.age.min, key: 'age.min' },
-      'Age (Maximum)': { val: RULES.age.max, key: 'age.max' },
-      'Graduation Year (Start)': { val: RULES.graduation_year.min, key: 'grad.min' },
-      'CGPA (Minimum 10-point scale)': { val: RULES.cgpa.min, key: 'cgpa' }
-    },
-    'Compliance Settings': {
-      'Maximum Exceptions Allowed': { val: RULES.exception_limit, key: 'limit' },
-      'Rationale Minimum Length': { val: RULES.rationale_min_length, key: 'len' },
-      'PII Masking Enabled': { val: RULES.pii_masking, key: 'mask' }
-    }
-  };
-  
-  container.innerHTML = Object.entries(groups).map(([title, rules]) => `
+  container.innerHTML = `
     <div class="rule-group">
-      <div class="panel-header" style="color:var(--text)">${title}</div>
-      ${Object.entries(rules).map(([name, data]) => `
-        <div class="rule-row">
-          <div class="rule-info">
-            <h4>${name}</h4>
-            <p>System enforcement key: ${data.key}</p>
-          </div>
-          <input type="text" class="rule-input" value="${data.val}">
+      <div class="panel-header" style="color:var(--text)">CORE THRESHOLDS</div>
+      <div class="rule-row">
+        <div class="rule-info"><h4>Age Range</h4><p>Minimum and Maximum age allowed.</p></div>
+        <div>
+          <input type="number" id="rule-age-min" class="rule-input" value="${RULES.age.min}">
+          <input type="number" id="rule-age-max" class="rule-input" value="${RULES.age.max}">
         </div>
-      `).join('')}
+      </div>
+      <div class="rule-row">
+        <div class="rule-info"><h4>Graduation Year</h4><p>Earliest and Latest year.</p></div>
+        <div>
+          <input type="number" id="rule-grad-min" class="rule-input" value="${RULES.graduation_year.min}">
+          <input type="number" id="rule-grad-max" class="rule-input" value="${RULES.graduation_year.max}">
+        </div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-info"><h4>Minimum Percentage</h4><p>Qualifying threshold.</p></div>
+        <input type="number" id="rule-perc" class="rule-input" value="${RULES.percentage.min}">
+      </div>
+      <div class="rule-row">
+        <div class="rule-info"><h4>Minimum CGPA</h4><p>Scaling factor (e.g. 6.0).</p></div>
+        <input type="number" id="rule-cgpa" class="rule-input" value="${RULES.cgpa.min}">
+      </div>
     </div>
-  `).join('');
+
+    <div class="rule-group">
+      <div class="panel-header" style="color:var(--text)">SYSTEM COMPLIANCE</div>
+      <div class="rule-row">
+        <div class="rule-info"><h4>Exceptions Limit</h4><p>Auto-flag if > than this value.</p></div>
+        <input type="number" id="rule-limit" class="rule-input" value="${RULES.exception_limit}">
+      </div>
+      <div class="rule-row">
+        <div class="rule-info"><h4>Rationale Min Length</h4><p>Character count minimum.</p></div>
+        <input type="number" id="rule-len" class="rule-input" value="${RULES.rationale_min_length}">
+      </div>
+    </div>
+  `;
+
+  document.getElementById('saveRulesBtn').onclick = saveRules;
+}
+
+async function saveRules() {
+  const btn = document.getElementById('saveRulesBtn');
+  btn.textContent = 'SAVING CONFIG...';
+  btn.disabled = true;
+
+  const newConfig = {
+    ...RULES,
+    age: { min: parseInt(document.getElementById('rule-age-min').value), max: parseInt(document.getElementById('rule-age-max').value) },
+    graduation_year: { min: parseInt(document.getElementById('rule-grad-min').value), max: parseInt(document.getElementById('rule-grad-max').value) },
+    percentage: { min: parseInt(document.getElementById('rule-perc').value) },
+    cgpa: { min: parseFloat(document.getElementById('rule-cgpa').value) },
+    exception_limit: parseInt(document.getElementById('rule-limit').value),
+    rationale_min_length: parseInt(document.getElementById('rule-len').value)
+  };
+
+  try {
+    const res = await fetch(`${RULES.api_url}/api/rules`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: newConfig })
+    });
+    if (res.ok) {
+      alert('Rules Synced Successfully! Chrome Extensions will follow new rules on next load.');
+      RULES = newConfig;
+    }
+  } catch (e) { alert('Failed to sync rules.'); }
+  finally {
+    btn.textContent = 'LOCK & APPLY CHANGES';
+    btn.disabled = false;
+  }
 }
 
 function exportFullReport() {

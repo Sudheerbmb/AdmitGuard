@@ -7,23 +7,27 @@ let autoSaveTimer = null;
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Load Local Defaults (Bootstrap)
   try {
-    const res = await fetch(chrome.runtime.getURL('rules.json'));
-    RULES = await res.json();
+    const localRes = await fetch(chrome.runtime.getURL('rules.json'));
+    RULES = await localRes.json();
   } catch (e) {
-    RULES = {
-      age: { min: 18, max: 35 },
-      graduation_year: { min: 2015, max: 2025 },
-      percentage: { min: 60 },
-      cgpa: { min: 6.0 },
-      screening_score: { min: 40, max: 100 },
-      exception_limit: 2,
-      exception_keywords: ['approved by', 'special case', 'documentation pending', 'waiver granted'],
-      rationale_min_length: 30,
-      aadhaar_checksum: true,
-      auto_save_draft: true,
-      auto_save_interval_ms: 3000
-    };
+    console.error('Local rules load failed');
+  }
+
+  // 2. Try to sync with Live Backend
+  if (RULES.api_url && RULES.api_url !== 'https://admitguard.onrender.com') {
+    try {
+      const remoteRes = await fetch(`${RULES.api_url}/api/rules`);
+      if (remoteRes.ok) {
+        const remoteRules = await remoteRes.json();
+        // Merge but keep the api_url which is extension-specific
+        RULES = { ...remoteRules, api_url: RULES.api_url };
+        console.log('🛡️ Live Rules Synced from Backend');
+      }
+    } catch (err) {
+      console.warn('🛡️ Backend Sync Failed. Using offline rules.');
+    }
   }
 
   document.getElementById('excLimit').textContent = RULES.exception_limit;

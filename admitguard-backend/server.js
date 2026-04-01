@@ -31,11 +31,35 @@ const initDb = async () => {
       rationale JSONB,
       decision TEXT DEFAULT 'pending'
     );
+    CREATE TABLE IF NOT EXISTS rules (
+      id INT PRIMARY KEY,
+      config JSONB NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
   `;
   try {
     await pool.query(queryText);
-    // Explicitly add 'decision' column if missed in older runs
     await pool.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS decision TEXT DEFAULT 'pending'`);
+    
+    // Seed default rules if empty
+    const res = await pool.query('SELECT count(*) FROM rules');
+    if (res.rows[0].count == 0) {
+      const defaultRules = {
+        age: { min: 18, max: 35 },
+        graduation_year: { min: 2015, max: 2025 },
+        percentage: { min: 60 },
+        cgpa: { min: 6.0 },
+        screening_score: { min: 40, max: 100 },
+        exception_limit: 2,
+        exception_keywords: ["approved by", "special case", "documentation pending", "waiver granted"],
+        rationale_min_length: 30,
+        aadhaar_checksum: true,
+        pii_masking: true,
+        email_whitelist: [],
+        auto_save_draft: true
+      };
+      await pool.query('INSERT INTO rules(id, config) VALUES(1, $1)', [JSON.stringify(defaultRules)]);
+    }
     console.log('Database initialized successfully.');
   } catch (err) {
     console.error('Error initializing database:', err);
@@ -45,10 +69,29 @@ initDb();
 
 // ── ENDPOINTS ─────────────────────────────────────────────────────────────────
 
+app.get('/api/rules', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT config FROM rules WHERE id = 1');
+    res.json(result.rows[0].config);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch rules' });
+  }
+});
+
+app.put('/api/rules', async (req, res) => {
+  try {
+    const { config } = req.body;
+    await pool.query('UPDATE rules SET config = $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1', [JSON.stringify(config)]);
+    res.json({ message: 'Rules updated successfully', config });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update rules' });
+  }
+});
+
 app.get('/api/submissions', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM submissions ORDER BY timestamp DESC');
-    res.json(result.rows);
+    res.json(result.rows || []);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch' });
   }
@@ -70,10 +113,9 @@ app.post('/api/submissions', async (req, res) => {
   }
 });
 
-// NEW: PATCH decision status
 app.patch('/api/submissions/:candidate_id/decision', async (req, res) => {
   const { candidate_id } = req.params;
-  const { decision } = req.body; // 'approved' or 'rejected'
+  const { decision } = req.body;
 
   try {
     const result = await pool.query(
