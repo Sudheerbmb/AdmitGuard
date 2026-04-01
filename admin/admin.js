@@ -620,10 +620,10 @@ async function askAiAssistant() {
     const data = await res.json();
     
     // 4. SMART INTERACTION: Populate the Mentioned Profiles Sidebar
-    const idMatches = [...new Set(data.response.match(/\b\d{10,14}\b/g))]; // Find unique IDs
+    const idMatches = [...new Set(data.response.match(/\d{10,15}/g))]; // MORE ROBUST REGEX
     const mentionList = document.getElementById('aiMentionedProfiles');
     if (mentionList && idMatches.length > 0) {
-      mentionList.innerHTML = ''; // Clear for new question
+      mentionList.innerHTML = '';
       idMatches.forEach(idStr => {
         const id = parseInt(idStr);
         const sub = allSubmissions.find(s => s.id === id);
@@ -632,7 +632,7 @@ async function askAiAssistant() {
           card.className = 'mentioned-card';
           card.innerHTML = `
             <h5>${sub.fields.name}</h5>
-            <div class="meta">ID: ${id} • Scored: ${sub.fields.percentage}%</div>
+            <div class="meta">ID: ${id} • ${sub.fields.percentage}%</div>
             <button class="btn-audit" onclick="showDetails(${id})">DEEP DIVE</button>
           `;
           mentionList.appendChild(card);
