@@ -165,8 +165,9 @@ function renderTable() {
           ${sub.exceptions_used.map(e => `<span class="ex-tag">${e.replace('_', ' ')}</span>`).join('') || '—'}
         </td>
         <td>${decisionBadge}</td>
-        <td>
+        <td style="display: flex; gap: 8px;">
           <button class="btn-sm approve" onclick="event.stopPropagation(); patchDecision(${sub.id}, 'approved')">APPROVE</button>
+          <button class="btn-sm reject" onclick="event.stopPropagation(); patchDecision(${sub.id}, 'rejected')">REJECT</button>
         </td>
       </tr>
     `;
@@ -232,11 +233,37 @@ function updateBulkUI() {
 async function bulkAction(decision) {
   if (!confirm(`Are you sure you want to ${decision} these ${selectedIds.size} candidates?`)) return;
   
-  const promises = Array.from(selectedIds).map(id => patchDecision(id, decision, true));
-  await Promise.all(promises);
+  const approveBtn = document.getElementById('bulkApprove');
+  const rejectBtn = document.getElementById('bulkReject');
+  const originalApproveText = approveBtn.textContent;
+  const originalRejectText = rejectBtn.textContent;
+
+  // 1. Immediate Visual Feedback (Snappy UI)
+  approveBtn.disabled = true;
+  rejectBtn.disabled = true;
+  if (decision === 'approved') approveBtn.textContent = 'APPROVING...';
+  else rejectBtn.textContent = 'REJECTING...';
+
+  // 2. Optimistic Step: Clear selection and hide bar immediately
+  const processingIds = Array.from(selectedIds);
   selectedIds.clear();
   document.getElementById('selectAll').checked = false;
-  loadSubmissions();
+  updateBulkUI(); // Hide the selection bar right away
+
+  try {
+    // 3. Process requests in parallel
+    const promises = processingIds.map(id => patchDecision(id, decision, true));
+    await Promise.all(promises);
+  } catch (e) {
+    console.error('Bulk action encountered errors', e);
+  } finally {
+    // 4. Restore UI state and refresh data
+    approveBtn.disabled = false;
+    rejectBtn.disabled = false;
+    approveBtn.textContent = originalApproveText;
+    rejectBtn.textContent = originalRejectText;
+    await loadSubmissions(); // Re-fetch to confirm server state
+  }
 }
 
 async function patchDecision(id, decision, isBulk = false) {
@@ -246,8 +273,16 @@ async function patchDecision(id, decision, isBulk = false) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ decision })
     });
-    if (res.ok && !isBulk) loadSubmissions();
-  } catch (e) { console.error('Decision sync failed for', id); }
+    
+    // Only trigger individual reload if NOT part of a bulk operation
+    if (res.ok && !isBulk) {
+      await loadSubmissions();
+    }
+    return res.ok;
+  } catch (e) { 
+    console.error(`Decision sync failed for ID ${id}:`, e);
+    return false;
+  }
 }
 
 function showDetails(id) {
