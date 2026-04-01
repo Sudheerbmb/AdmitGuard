@@ -593,6 +593,11 @@ async function askAiAssistant() {
       rules: RULES,
       submissionSummary: allSubmissions.map(s => ({
         id: s.id,
+        candidate_name: s.fields.name,
+        email: s.fields.email,
+        percentage: s.fields.percentage,
+        screening_score: s.fields.screening_score,
+        graduation_year: s.fields.grad_year,
         flagged: s.flagged,
         exceptions: s.exceptions_used,
         decision: s.decision,
