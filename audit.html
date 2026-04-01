@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AdmitGuard — Audit Log</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --surface2: #1c2030;
+      --border: #252a3a;
+      --accent: #00e5ff;
+      --accent2: #ff4b6e;
+      --warn: #ffb300;
+      --success: #00e676;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --error: #ff4b6e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      min-height: 100vh;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px; font-weight: 700; color: #000;
+    }
+    .logo-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px; font-weight: 700;
+      color: var(--accent); letter-spacing: 2px;
+    }
+    .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+
+    .header-actions { display: flex; gap: 10px; }
+    .btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 1px;
+      padding: 7px 14px; border-radius: 4px;
+      cursor: pointer; text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.danger:hover { border-color: var(--error); color: var(--error); }
+    .btn.success:hover { border-color: var(--success); color: var(--success); }
+    .btn.primary {
+      background: var(--accent); color: #000;
+      border-color: var(--accent); font-weight: 700;
+    }
+    .btn.primary:hover { background: #33eaff; }
+
+    main { padding: 28px 32px; }
+
+    .stats-row {
+      display: flex; gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 20px;
+      flex: 1;
+      position: relative;
+    }
+    .stat-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px; font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-val.warn { color: var(--warn); }
+    .stat-val.danger { color: var(--error); }
+    .stat-label {
+      font-size: 10px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    /* COMPLIANCE BAR */
+    .compliance-bar-wrap {
+      margin-bottom: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+    .compliance-label {
+      display: flex; justify-content: space-between;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 1px;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+    .compliance-bar {
+      height: 8px; background: var(--surface2);
+      border-radius: 4px; overflow: hidden;
+      display: flex;
+    }
+    .bar-segment { height: 100%; transition: width 0.5s ease; }
+    .bar-clean { background: var(--success); }
+    .bar-flagged { background: var(--warn); }
+
+    .search-row {
+      display: flex; gap: 10px; margin-bottom: 16px; align-items: center;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .filter-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      padding: 8px 12px;
+      outline: none;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+
+    .pii-toggle-wrap {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--muted);
+      cursor: pointer; user-select: none;
+    }
+    .pii-toggle {
+      width: 32px; height: 18px; background: var(--surface2);
+      border-radius: 9px; position: relative; border: 1px solid var(--border);
+    }
+    .pii-toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 12px; height: 12px; background: var(--muted); border-radius: 50%;
+      transition: all 0.2s;
+    }
+    .pii-toggle.on { background: rgba(0,229,255,0.2); border-color: var(--accent); }
+    .pii-toggle.on::after { left: 16px; background: var(--accent); }
+
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--surface2); }
+    th {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      font-size: 12px;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr.flagged td { background: rgba(255,179,0,0.04); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 3px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .badge.flagged { background: rgba(255,179,0,0.15); color: var(--warn); border: 1px solid rgba(255,179,0,0.3); }
+    .badge.ok { background: rgba(0,230,118,0.1); color: var(--success); border: 1px solid rgba(0,230,118,0.25); }
+    .badge.exception { background: rgba(0,229,255,0.1); color: var(--accent); border: 1px solid rgba(0,229,255,0.2); font-size: 8px; margin: 1px; }
+
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+
+    .detail-modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .detail-modal.show { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      width: 500px; max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 16px;
+    }
+    .modal-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px; color: var(--accent); letter-spacing: 1px;
+    }
+    .modal-close {
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 18px; line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+    .detail-row {
+      display: flex; justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-val { color: var(--text); font-weight: 500; max-width: 60%; text-align: right; word-break: break-all; }
+
+    /* SYNC FEEDBACK */
+    #syncStatus { font-size: 9px; color: var(--muted); margin-top: 4px; display: block; text-align: center; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">AG</div>
+    <div>
+      <div class="logo-text">ADMITGUARD</div>
+      <div class="logo-sub">Audit Log</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn success" id="syncBtn">Cloud Sync</button>
+    <button class="btn" id="exportBtn">Export CSV</button>
+    <button class="btn danger" id="clearBtn">Clear All</button>
+  </div>
+</header>
+
+<main>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-label">Total Submissions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val warn" id="statFlagged">0</div>
+      <div class="stat-label">Flagged</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statExceptions">0</div>
+      <div class="stat-label">With Exceptions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val danger" id="statToday">0</div>
+      <div class="stat-label">Today</div>
+    </div>
+  </div>
+
+  <div class="compliance-bar-wrap">
+    <div class="compliance-label">
+      <span>COMPLIANCE DISTRIBUTION</span>
+      <span id="compliancePct">0% Clean</span>
+    </div>
+    <div class="compliance-bar">
+      <div class="bar-segment bar-clean" id="barClean" style="width:0%"></div>
+      <div class="bar-segment bar-flagged" id="barFlagged" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <input class="search-input" id="searchInput" placeholder="Search by name or email..." />
+    <select class="filter-select" id="filterSelect">
+      <option value="all">All</option>
+      <option value="flagged">Flagged Only</option>
+      <option value="clean">Clean Only</option>
+    </select>
+    <div class="pii-toggle-wrap" id="piiToggleGroup">
+      <div class="pii-toggle" id="piiToggle"></div>
+      PII Masking
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Timestamp</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Exceptions</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="auditBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No submissions yet</div>
+      <div>Validated entries will appear here</div>
+    </div>
+  </div>
+  <span id="syncStatus"></span>
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="detail-modal" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">SUBMISSION DETAIL</div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="audit.js"></script>
+</body>
+</html>

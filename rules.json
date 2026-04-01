@@ -1,0 +1,21 @@
+{
+  "age": { "min": 18, "max": 35 },
+  "graduation_year": { "min": 2015, "max": 2025 },
+  "percentage": { "min": 60 },
+  "cgpa": { "min": 6.0 },
+  "screening_score": { "min": 40, "max": 100 },
+  "exception_limit": 2,
+  "exception_keywords": [
+    "approved by",
+    "special case",
+    "documentation pending",
+    "waiver granted"
+  ],
+  "rationale_min_length": 30,
+  "aadhaar_checksum": true,
+  "email_whitelist": [],
+  "auto_save_draft": true,
+  "auto_save_interval_ms": 3000,
+  "pii_masking": true,
+  "api_url": "YOUR_DEPLOYED_BACKEND_URL_HERE"
+}

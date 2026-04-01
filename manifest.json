@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "AdmitGuard",
+  "version": "1.0",
+  "description": "Admission Data Validation & Compliance System",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["storage"],
+  "web_accessible_resources": [
+    {
+      "resources": ["rules.json", "audit.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
