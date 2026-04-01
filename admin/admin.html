@@ -217,9 +217,12 @@
 
   <!-- AI INSIGHTS (RAG) -->
   <section id="aiView" class="view">
-    <div class="ai-container">
+    <div class="ai-container" id="aiContainer">
       <div class="ai-chat-panel panel">
-        <div class="panel-header">AG — Admission Assistant (RAG)</div>
+        <div class="panel-header flex-header">
+            <span>AG — Admission Assistant (RAG)</span>
+            <button class="btn-icon" id="toggleAiSidebar" title="Toggle Suggestions">📑</button>
+        </div>
         <div class="chat-history" id="chatHistory">
           <div class="ai-msg">
             Hello Manager! I've analyzed your current <strong>admission pipeline</strong>. 
@@ -241,7 +244,7 @@
         </div>
       </div>
 
-      <div class="ai-sidebar panel">
+      <div class="ai-sidebar panel" id="aiSidebar">
         <div class="panel-header">Suggested Queries</div>
         <div id="aiRecs" class="ai-recs">
             <div class="rec-card" onclick="setAiQuery('Summarize the rationale given for age exceptions')">

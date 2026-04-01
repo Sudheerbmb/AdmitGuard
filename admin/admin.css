@@ -128,6 +128,13 @@ header p { color: var(--muted); font-size: 14px; }
 }
 .btn.secondary:hover { background: rgba(255, 255, 255, 0.06); }
 
+.btn-icon {
+  background: none; border: none; cursor: pointer;
+  padding: 4px; border-radius: 4px; transition: 0.2s;
+  font-size: 14px;
+}
+.btn-icon:hover { background: rgba(255, 255, 255, 0.05); transform: rotate(5deg); }
+
 /* STATS */
 .stats-grid {
   display: grid;
@@ -351,7 +358,16 @@ input:focus { border-color: var(--accent); }
   grid-template-columns: 1fr 280px 240px;
   gap: 20px;
   height: calc(100vh - 180px);
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.ai-container.sidebar-hidden {
+  grid-template-columns: 1fr 280px 0px;
+  gap: 20px 0;
+}
+.ai-container.sidebar-hidden #aiSidebar {
+    display: none;
+}
+
 .ai-chat-panel {
   display: flex;
   flex-direction: column;

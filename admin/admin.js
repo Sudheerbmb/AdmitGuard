@@ -50,6 +50,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('aiInput')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') askAiAssistant();
   });
+  document.getElementById('toggleAiSidebar')?.addEventListener('click', () => {
+    const container = document.getElementById('aiContainer');
+    container.classList.toggle('sidebar-hidden');
+  });
 });
 
 async function loadRules() {
