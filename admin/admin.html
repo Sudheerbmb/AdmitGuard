@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AdmitGuard — Command Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css">
+  <script src="auth.js"></script>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">AG</div>
+    <div class="logo-text">ADMIN COMMAND</div>
+  </div>
+  <nav>
+    <div class="nav-item active" data-view="dashboard">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" data-view="pipeline">
+      <span class="icon">🛤️</span> Admission Pipeline
+    </div>
+    <div class="nav-item" data-view="audit">
+      <span class="icon">📜</span> Detailed Logs
+    </div>
+    <div class="divider"></div>
+    <div class="nav-item" data-view="settings">
+      <span class="icon">⚙️</span> Rule Config
+    </div>
+  </nav>
+  <div class="footer-info">
+    Backend: <span id="backendStatus">Checking...</span>
+  </div>
+</div>
+
+<div class="main-content">
+  <header>
+    <div class="header-left">
+      <h1 id="viewTitle">Admission Dashboard</h1>
+      <p id="viewSubtitle">Real-time validation & risk analytics</p>
+    </div>
+    <div class="header-right">
+      <button class="btn success" id="syncBtn">Refresh Sync</button>
+      <button class="btn secondary" id="exportBtn">Export Reports</button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD VIEW -->
+  <section id="dashboardView" class="view active">
+    
+    <!-- STATS CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Applied</div>
+        <div class="val" id="statTotal">0</div>
+        <div class="desc">Candidates entered</div>
+      </div>
+      <div class="stat-card border-success">
+        <div class="label" style="color:var(--success)">Approved</div>
+        <div class="val" id="statApproved">0</div>
+        <div class="desc">Ready for enrollment</div>
+      </div>
+      <div class="stat-card border-error">
+        <div class="label" style="color:var(--error)">Rejected</div>
+        <div class="val" id="statRejected">0</div>
+        <div class="desc">Ineligible candidates</div>
+      </div>
+      <div class="stat-card border-warn">
+        <div class="label" style="color:var(--warn)">Flagged (Risky)</div>
+        <div class="val" id="statFlagged">0</div>
+        <div class="desc">Candidates &gt; limit</div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS FUNNEL & RISK -->
+    <div class="analytics-grid">
+      <div class="panel funnel-panel">
+        <div class="panel-header">Admission Funnel Conversion</div>
+        <div class="funnel-container">
+          <div class="funnel-stage">
+            <div class="stage-label">Applied</div>
+            <div class="stage-bar" id="barApplied" style="width:100%"></div>
+            <div class="stage-pct" id="pctApplied">100%</div>
+          </div>
+          <div class="funnel-stage">
+            <div class="stage-label">Validated</div>
+            <div class="stage-bar" id="barValidated" style="width:0%"></div>
+            <div class="stage-pct" id="pctValidated">0%</div>
+          </div>
+          <div class="funnel-stage">
+            <div class="stage-label">Approved</div>
+            <div class="stage-bar" id="barApproved" style="width:0%"></div>
+            <div class="stage-pct" id="pctApproved">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel risk-panel">
+        <div class="panel-header">Primary Rejection Factors</div>
+        <div id="riskChart" class="risk-chart">
+          <!-- Populated by JS -->
+          <div class="empty-msg">Waiting for data analytics...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="panel data-panel">
+      <div class="panel-header flex-header">
+        <span>Recent Submissions</span>
+        <div class="header-actions">
+          <div class="pii-toggle" id="piiToggleWrap">
+            <div class="toggle-switch" id="piiToggle"></div>
+            Mask PII
+          </div>
+          <input type="text" id="searchInput" placeholder="Search entries...">
+          <select id="filterSelect">
+            <option value="all">All Status</option>
+            <option value="pending">Pending Review</option>
+            <option value="flagged">Flagged Only</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="bulk-actions" id="bulkActions" style="display:none">
+        <span id="bulkCount">0 selected</span>
+        <button class="btn-sm approve" id="bulkApprove">Bulk Approve</button>
+        <button class="btn-sm reject" id="bulkReject">Bulk Reject</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="mainTable">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selectAll"></th>
+              <th>Candidate</th>
+              <th>Compliance</th>
+              <th>Auto-Flag</th>
+              <th>Exception Details</th>
+              <th>Manager Decision</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminAuditBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Candidate Deep Dive</h3>
+      <button class="close-btn" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalContent"></div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
