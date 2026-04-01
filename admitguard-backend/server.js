@@ -175,7 +175,7 @@ app.post('/api/analyze', async (req, res) => {
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [{ role: 'user', content: prompt }],
-      model: 'llama-3.1-70b-versatile',
+      model: 'llama-3.3-70b-versatile',
     });
 
     res.json({ response: chatCompletion.choices[0].message.content });
