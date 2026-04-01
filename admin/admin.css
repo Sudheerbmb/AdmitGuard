@@ -344,3 +344,106 @@ input:focus { border-color: var(--accent); }
   border-top: 1px solid var(--border);
   display: flex; justify-content: center;
 }
+
+/* AI INSIGHTS (RAG) */
+.ai-container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  height: calc(100vh - 180px);
+}
+.ai-chat-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.chat-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.ai-msg, .user-msg {
+  padding: 14px 18px;
+  border-radius: 16px;
+  max-width: 85%;
+  line-height: 1.6;
+  font-size: 13.5px;
+  animation: slideUp 0.3s ease-out;
+}
+.ai-msg {
+  align-self: flex-start;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+.user-msg {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+.chat-input-area {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+}
+.chat-input-area input {
+  flex: 1;
+  background: var(--bg);
+}
+.ai-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.ai-recs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rec-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rec-card:hover {
+  border-color: var(--accent);
+  background: rgba(0, 242, 255, 0.05);
+  transform: translateX(4px);
+}
+.rec-card span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.rec-card p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* AI MARKDOWN STYLING */
+.ai-msg strong { color: var(--accent); }
+.ai-msg ul { padding-left: 20px; margin-top: 8px; }
+.ai-msg li { margin-bottom: 6px; }
+.ai-msg code { 
+  background: #000; padding: 2px 6px; border-radius: 4px; font-family: 'Space Mono', monospace;
+  font-size: 11px; color: var(--success);
+}

@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('bulkApprove').addEventListener('click', () => bulkAction('approved'));
   document.getElementById('bulkReject').addEventListener('click', () => bulkAction('rejected'));
   document.getElementById('modalClose').addEventListener('click', () => document.getElementById('detailModal').classList.remove('active'));
+
+  // AI Assistant listeners
+  document.getElementById('aiSendBtn')?.addEventListener('click', askAiAssistant);
+  document.getElementById('aiInput')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') askAiAssistant();
+  });
 });
 
 async function loadRules() {
@@ -547,4 +553,77 @@ function exportFullReport() {
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   a.download = `ADMITGUARD_REPORT_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
+}
+
+/** 🤖 AI ASSISTANT / RAG LOGIC **/
+
+function setAiQuery(text) {
+  const input = document.getElementById('aiInput');
+  if (input) {
+    input.value = text;
+    input.focus();
+  }
+}
+
+async function askAiAssistant() {
+  const input = document.getElementById('aiInput');
+  const history = document.getElementById('chatHistory');
+  const query = input.value.trim();
+  
+  if (!query) return;
+
+  // 1. Add User Msg
+  const userDiv = document.createElement('div');
+  userDiv.className = 'user-msg';
+  userDiv.textContent = query;
+  history.appendChild(userDiv);
+  input.value = '';
+  history.scrollTop = history.scrollHeight;
+
+  // 2. Add AI Loading Msg
+  const aiDiv = document.createElement('div');
+  aiDiv.className = 'ai-msg';
+  aiDiv.innerHTML = '<span class="loading-dots">Thinking...</span>';
+  history.appendChild(aiDiv);
+
+  try {
+    // 3. Prepare Context (RAG - Lightweight)
+    // We send current rules and a summarized version of submissions
+    const context = {
+      rules: RULES,
+      submissionSummary: allSubmissions.map(s => ({
+        id: s.id,
+        flagged: s.flagged,
+        exceptions: s.exceptions_used,
+        decision: s.decision,
+        rationales: s.rationale
+      }))
+    };
+
+    const res = await fetch(`${RULES.api_url}/api/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, context })
+    });
+
+    if (!res.ok) throw new Error('AI analysis failed');
+    
+    const data = await res.json();
+    
+    // Parse response for simple markdown
+    aiDiv.innerHTML = formatAiResponse(data.response);
+
+  } catch (err) {
+    aiDiv.innerHTML = `<span style="color:var(--error)">Error: ${err.message}. Ensure backend is updated.</span>`;
+  } finally {
+    history.scrollTop = history.scrollHeight;
+  }
+}
+
+function formatAiResponse(text) {
+  // Simple markdown-ish bold and list replacement
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\* (.*?)/g, '<br>• $1')
+    .replace(/\n/g, '<br>');
 }

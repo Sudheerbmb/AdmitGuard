@@ -6,6 +6,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 require('dotenv').config();
+const Groq = require('groq-sdk');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -139,4 +140,49 @@ app.delete('/api/submissions', async (req, res) => {
 });
 
 app.get('/health', (req, res) => res.send('🛡️ Backend Live'));
+
+// ── AI ASSISTANT (RAG) powered by GROQ ──────────────────────────────────────────
+const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
+
+app.post('/api/analyze', async (req, res) => {
+  const { query, context } = req.body;
+  
+  if (!groq) {
+    return res.json({ response: "🛡️ **AI Assistant Unavailable**: To enable deep RAG analysis via Groq, please add your `GROQ_API_KEY` to the backend environment variables." });
+  }
+
+  try {
+    const prompt = `
+      You are AdmitGuard AI, an expert admissions consultant assistant. 
+      Analyze the following context and answer the user's query snappily.
+      
+      SYSTEM CONFIG (Existing Rules):
+      ${JSON.stringify(context.rules, null, 2)}
+      
+      CURRENT PIPELINE DATA (Summary):
+      ${JSON.stringify(context.submissionSummary, null, 2)}
+      
+      USER CONTEXT: The user is an Admissions Manager reviewing these applications.
+
+      USER QUERY: "${query}"
+      
+      Response Protocol:
+      - Use bold text for key insights.
+      - Use bullet points for recommendations.
+      - If recommending rule changes, provide clear reasoning.
+      - Be professional yet proactive.
+    `;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'llama-3.1-70b-versatile',
+    });
+
+    res.json({ response: chatCompletion.choices[0].message.content });
+  } catch (err) {
+    console.error('Groq AI Analysis Error:', err);
+    res.status(500).json({ error: 'AI analysis failed' });
+  }
+});
+
 app.listen(port, () => console.log(`🛡️ Port ${port}`));

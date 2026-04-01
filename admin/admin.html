@@ -29,6 +29,9 @@
     <div class="nav-item" data-view="rules">
       <span class="icon">⚙️</span> Rule Config
     </div>
+    <div class="nav-item" data-view="ai">
+      <span class="icon">🤖</span> AI Insights
+    </div>
   </nav>
   <div class="footer-info">
     Backend: <span id="backendStatus">Checking...</span>
@@ -208,6 +211,44 @@
       </div>
       <div class="rules-footer">
         <button class="btn success" id="saveRulesBtn">LOCK & APPLY CHANGES</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI INSIGHTS (RAG) -->
+  <section id="aiView" class="view">
+    <div class="ai-container">
+      <div class="ai-chat-panel panel">
+        <div class="panel-header">AG — Admission Assistant (RAG)</div>
+        <div class="chat-history" id="chatHistory">
+          <div class="ai-msg">
+            Hello Manager! I've analyzed your current <strong>admission pipeline</strong>. 
+            I can answer questions about flags, exception trends, or suggest rule optimizations based on candidate quality.
+            <br><br>
+            <em>Try asking: "What are the top 3 reasons for candidate flags?"</em>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" id="aiInput" placeholder="Ask about trends, flags, or rule recommendations...">
+          <button class="btn success" id="aiSendBtn">Analyze</button>
+        </div>
+      </div>
+      <div class="ai-sidebar panel">
+        <div class="panel-header">Suggested Queries</div>
+        <div id="aiRecs" class="ai-recs">
+            <div class="rec-card" onclick="setAiQuery('Summarize the rationale given for age exceptions')">
+                <span>📍 Exception Audit</span>
+                <p>Understand why candidates are failing age rules.</p>
+            </div>
+            <div class="rec-card" onclick="setAiQuery('Suggest optimal rules to reduce flags')">
+                <span>⚡ Rule Optimization</span>
+                <p>AI suggestions for your eligibility thresholds.</p>
+            </div>
+            <div class="rec-card" onclick="setAiQuery('Who are the top 5 most promising flagged candidates?')">
+                <span>💎 Hidden Gems</span>
+                <p>Spot high-potential candidates with minor flags.</p>
+            </div>
+        </div>
       </div>
     </div>
   </section>
