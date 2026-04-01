@@ -10,6 +10,10 @@
     }
   },
   "permissions": ["storage"],
+  "host_permissions": [
+    "https://*.onrender.com/*",
+    "http://localhost:3000/*"
+  ],
   "web_accessible_resources": [
     {
       "resources": ["rules.json", "audit.html"],

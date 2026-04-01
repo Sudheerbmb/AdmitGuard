@@ -16,14 +16,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 2. Try to sync with Live Backend
-  if (RULES.api_url && RULES.api_url !== 'https://admitguard.onrender.com') {
+  if (RULES.api_url) {
     try {
       const remoteRes = await fetch(`${RULES.api_url}/api/rules`);
       if (remoteRes.ok) {
         const remoteRules = await remoteRes.json();
         // Merge but keep the api_url which is extension-specific
-        RULES = { ...remoteRules, api_url: RULES.api_url };
-        console.log('🛡️ Live Rules Synced from Backend');
+        const updatedRules = { ...remoteRules, api_url: RULES.api_url };
+        RULES = updatedRules;
+        console.log('🛡️ Live Rules Synced from Backend', RULES);
+        
+        // Update any UI elements that depend on these rules
+        const limitDisplay = document.getElementById('excLimit');
+        if (limitDisplay) limitDisplay.textContent = RULES.exception_limit;
       }
     } catch (err) {
       console.warn('🛡️ Backend Sync Failed. Using offline rules.');
