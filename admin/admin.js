@@ -615,19 +615,25 @@ async function askAiAssistant() {
     
     const data = await res.json();
     
-    // 4. SMART INTERACTION: Auto-find and "Flash" profile if an ID is detected
-    const idMatches = data.response.match(/\b\d{10,14}\b/g); // Find IDs (10-14 digits)
-    if (idMatches && idMatches.length === 1) {
-      const detectedId = parseInt(idMatches[0]);
-      const foundSub = allSubmissions.find(s => s.id === detectedId);
-      if (foundSub) {
-        setTimeout(() => {
-          showDetails(detectedId);
-          // Add a visual flash to the modal if possible
-          document.querySelector('.modal')?.classList.add('flash-highlight');
-          setTimeout(() => document.querySelector('.modal')?.classList.remove('flash-highlight'), 1000);
-        }, 800);
-      }
+    // 4. SMART INTERACTION: Populate the Mentioned Profiles Sidebar
+    const idMatches = [...new Set(data.response.match(/\b\d{10,14}\b/g))]; // Find unique IDs
+    const mentionList = document.getElementById('aiMentionedProfiles');
+    if (mentionList && idMatches.length > 0) {
+      mentionList.innerHTML = ''; // Clear for new question
+      idMatches.forEach(idStr => {
+        const id = parseInt(idStr);
+        const sub = allSubmissions.find(s => s.id === id);
+        if (sub) {
+          const card = document.createElement('div');
+          card.className = 'mentioned-card';
+          card.innerHTML = `
+            <h5>${sub.fields.name}</h5>
+            <div class="meta">ID: ${id} • Scored: ${sub.fields.percentage}%</div>
+            <button class="btn-audit" onclick="showDetails(${id})">DEEP DIVE</button>
+          `;
+          mentionList.appendChild(card);
+        }
+      });
     }
 
     // Parse response for simple markdown and dynamic links

@@ -348,8 +348,8 @@ input:focus { border-color: var(--accent); }
 /* AI INSIGHTS (RAG) */
 .ai-container {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 24px;
+  grid-template-columns: 1fr 280px 240px;
+  gap: 20px;
   height: calc(100vh - 180px);
 }
 .ai-chat-panel {
@@ -358,6 +358,33 @@ input:focus { border-color: var(--accent); }
   padding: 0;
   overflow: hidden;
 }
+.ai-mentioned-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+}
+.mentioned-list {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mentioned-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  animation: slideInRight 0.3s ease-out;
+}
+.mentioned-card h5 { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.mentioned-card .meta { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+.mentioned-card .btn-audit {
+  width: 100%; background: var(--accent); color: #000;
+  border: none; border-radius: 4px; padding: 6px;
+  font-size: 10px; font-weight: 700; cursor: pointer;
+}
+@keyframes slideInRight { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
 .chat-history {
   flex: 1;
   overflow-y: auto;
