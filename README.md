@@ -18,10 +18,14 @@ The client-side engine is responsible for real-time validation. It operates on t
 *   **Hard-Rule Plane (Strict Validation)**: Uses deterministic algorithms to prevent non-compliant data from being submitted.
 *   **Soft-Rule Plane (Conditional Exception)**: Dynamically evaluates candidate profiles against cloud-synchronized rules (Age, GPA, Graduation Year). If a "soft violation" occurs, a state-machine prevents submission until a valid **Exception Rationale** is provided.
 
-### 2.2 The Oversight Dashboard (Manager Panel)
-A centralized interface designed for High-Resolution Auditing. It features:
-*   **PII Masking Layer**: An on-the-fly filtering engine that anonymizes sensitive data (Email, Aadhaar) during initial review to ensure compliance with privacy regulations.
-*   **State-Based Pipeline**: Traverses candidates through `Pending -> Flagged -> Approved/Rejected` stages, maintaining a full immutable audit trail.
+### 2.2 Managerial Oversight & Advanced Analytics Interface (Admin Dashboard)
+A centralized command-and-control dashboard structured to facilitate high-resolution auditing and decision-making. 
+*   **Granular PII Masking Architecture**: To maintain GDPR and institutional data privacy compliance, the interface implements a one-click **PII Layer** that dynamically masks sensitive identifying fields (Email, Aadhaar, Phone) during the initial audit phase.
+*   **Operational Pipeline Management**: Implements a state-machine driven **Pipeline View** (Kanban style). It allows managers to visually transition candidates between `Pending`, `Flagged`, `Approved`, and `Rejected` statuses, ensuring zero-loss pipeline visibility.
+*   **Real-time Intelligence Integration**: Directly interfaces with the **Groq-powered RAG engine**, providing an interactive sidebar where managers can ask complex structural questions like *"Identify all 2024 graduates with inconsistent screening scores"* and receive immediate, linked profile recommendations.
+*   **Adaptive Rule Sculpting**: Enables managers to modify institutional criteria (thresholds, keyword requirements, checksum toggles) instantly. These changes are versioned and propagated to all Edge Clients upon their next polling cycle.
+
+---
 
 ---
 
@@ -56,15 +60,29 @@ The AI Assistant (`/api/analyze`) uses a specialized agentic workflow to answer 
 
 ---
 
-## 5. Infrastructure & Component Matrix
+## 5. Technical Infrastructure & Component Matrix
+
+### 🚀 Core Technologies Leveraged
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) 
+![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) 
+![JavaScript](https://img.shields.io/badge/javascript-%23F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=black) 
+![Chrome](https://img.shields.io/badge/chrome%20extension-%234285F4.svg?style=for-the-badge&logo=google-chrome&logoColor=white) 
+![Nodejs](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) 
+![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB) 
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white) 
+![Vector](https://img.shields.io/badge/pgvector-%23336791.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq%20AI-%23f26522.svg?style=for-the-badge&logo=ai&logoColor=white)
+![Llama 3](https://img.shields.io/badge/Llama--3.3--70B-blue?style=for-the-badge&logo=meta&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
 | Module | Technology | Functional Role |
 | :--- | :--- | :--- |
-| **Edge Engine** | Vanilla JS / Chrome API | Real-time governance & local draft persistence |
-| **Backend Core** | Express.js / Node.js | API Orchestration & AI Context Management |
-| **Vector DB** | PostgreSQL + pgvector | High-performance storage of structured & latent data |
-| **Inference Layer** | Groq Llama 3.3 70B | Natural Language Reasoning & SQL Planning |
-| **Embeddings** | `@xenova/transformers` | Offline-capable vector generation |
+| **Edge Engine** | ![JS](https://img.shields.io/badge/JS-F7DF1E?logo=javascript&logoColor=black) ![Chrome](https://img.shields.io/badge/Chrome-4285F4?logo=googlechrome&logoColor=white) | Real-time governance & local draft persistence |
+| **Command Center** | ![HTML](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) ![CSS](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white) | Pipeline management, PII masking, & Decision patching |
+| **Backend Core** | ![Node](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white) | API Orchestration & AI Context Management |
+| **Vector DB** | ![Postgres](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-336791) | High-performance storage of structured & latent data |
+| **Inference Layer** | ![Groq](https://img.shields.io/badge/Groq-f26522) ![Llama](https://img.shields.io/badge/Llama3-0668E1) | Natural Language Reasoning & SQL Planning |
+| **Embeddings** | ![Transformers](https://img.shields.io/badge/Transformers-gray?logo=huggingface) ![Xenova](https://img.shields.io/badge/Xenova-6DA55F) | Offline-capable vector generation |
 
 ---
 
