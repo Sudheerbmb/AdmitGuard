@@ -18,13 +18,14 @@ AdmitGuard introduces a novel, distributed approach to admissions governance, le
 ![Vector](https://img.shields.io/badge/pgvector-%23336791.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq%20AI-%23f26522.svg?style=for-the-badge&logo=ai&logoColor=white)
 ![Llama 3](https://img.shields.io/badge/Llama--3.3--70B-blue?style=for-the-badge&logo=meta&logoColor=white)
+![Auth](https://img.shields.io/badge/Google--OAuth--2.0-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
 | Module | Technology | Functional Role |
 | :--- | :--- | :--- |
 | **Edge Engine** | ![JS](https://img.shields.io/badge/JS-F7DF1E?logo=javascript&logoColor=black) ![Chrome](https://img.shields.io/badge/Chrome-4285F4?logo=googlechrome&logoColor=white) | Real-time governance & local draft persistence |
-| **Command Center** | ![HTML](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) ![CSS](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white) | Pipeline management, PII masking, & Decision patching |
-| **Backend Core** | ![Node](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white) | API Orchestration & AI Context Management |
+| **Command Center** | ![Auth](https://img.shields.io/badge/Google-4285F4?logo=google&logoColor=white) ![HTML](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) | Secured Admin dashboard with JWT session state |
+| **Backend Core** | ![Node](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white) | Identity Verification (OIDC) & API Orchestration |
 | **Vector DB** | ![Postgres](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-336791) | High-performance storage of structured & latent data |
 | **Inference Layer** | ![Groq](https://img.shields.io/badge/Groq-f26522) ![Llama](https://img.shields.io/badge/Llama3-0668E1) | Natural Language Reasoning & SQL Planning |
 | **Embeddings** | ![Transformers](https://img.shields.io/badge/Transformers-gray?logo=huggingface) ![Xenova](https://img.shields.io/badge/Xenova-6DA55F) | Offline-capable vector generation |
@@ -84,7 +85,18 @@ The AI Assistant (`/api/analyze`) uses a specialized agentic workflow to answer 
 
 ---
 
-## 6. Deployment & Distributed Cloud Topology
+## 6. Authentication & Identity Governance
+To ensure institutional record-keeping is protected from unauthorized access, AdmitGuard implements a **Public Intake, Private Audit** security model:
+
+*   **Google OAuth 2.0 Integration**: The Admin Dashboard requires a valid Google Identity token to initialize. Sessions are cryptographically verified using Google's OpenID Connect (OIDC) protocol.
+*   **Zero-Trust Whitelisting**: Access to the core data APIs (Rules, Analysis, Pipeline) is restricted to pre-authorized administrator emails managed via secure environment variables (`ADMIN_EMAILS`).
+*   **Hybrid Endpoint Access**: 
+    *   **Ingress (Public)**: The `POST /api/submissions` endpoint is open to allow seamless data intake from the distributed browser extensions.
+    *   **Egress (Secured)**: All diagnostic, analytics, and decision-making endpoints require a valid Bearer token, preventing data exfiltration even if the API endpoint is publicly discovered.
+
+---
+
+## 7. Deployment & Distributed Cloud Topology
 
 To ensure institutional-grade availability and low-latency inference, AdmitGuard implements a multi-cloud distribution strategy:
 
@@ -100,9 +112,9 @@ To ensure institutional-grade availability and low-latency inference, AdmitGuard
 
 ---
 
-## 7. Logic Flow & State Diagrams
+## 8. Logic Flow & State Diagrams
 
-### 7.1 Submission Validation Flow
+### 8.1 Submission Validation Flow
 ```mermaid
 graph TD
     A[Data Entry] --> B{Hard Rules?}
@@ -115,7 +127,7 @@ graph TD
     D -- PASS --> I[Submit as CLEAN]
 ```
 
-### 7.2 AI RAG Pipeline
+### 8.2 AI RAG Pipeline
 ```mermaid
 graph LR
     A[Manager Query] --> B[AI Planner]
@@ -128,7 +140,7 @@ graph LR
 
 ---
 
-## 8. Conclusions
+## 9. Conclusions
 AdmitGuard represents a shift in admissions technology from passive record-keeping to **active governance**. By combining deterministic algorithms like Verhoeff with stochastic AI models like Llama 3, the framework provides a "Human-in-the-Loop" system that is both rigid in its compliance and flexible in its intelligence. It significantly reduces the operational overhead of auditing thousands of admissions while increasing the transparency of the decision-making process.
 
 ---
