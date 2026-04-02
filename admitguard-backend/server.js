@@ -14,6 +14,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 const client = new OAuth2Client("436650604205-ifoim7stupnfpp80u5ha2u2f6nouts5v.apps.googleusercontent.com");
 
+// 2. Initialize TWILIO (Safe fallback if SID/TOKEN are missing)
+let twilio = null;
+if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
+  twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+  console.log('🛡️ WhatsApp Automation: ONLINE');
+}
+
 app.use(cors({ origin: '*' }));
 app.use(bodyParser.json());
 
@@ -71,6 +78,33 @@ const initDb = async () => {
     console.error('Error initializing database:', err);
   }
 };
+// ── REUSABLE AUTOMATION ENGINE ──────────────────────────────────────────────
+async function sendWhatsAppAlert(fields, type) {
+  if (!twilio) return console.log('🛡️ WhatsApp Skip: Missing Credentials.');
+  
+  try {
+    const { name, phone } = fields;
+    // Normalize phone to E.164 (ensure +91 for India if needed)
+    const rawNumber = phone.toString().replace(/\D/g, "");
+    const finalPhone = rawNumber.startsWith('91') ? `+${rawNumber}` : `+91${rawNumber}`;
+
+    const templates = {
+      received: `🛡️ ADMITGUARD: Hi ${name.toUpperCase()}! We've successfully received your admission application. Our team will review it and get back to you soon. 📑`,
+      approved: `🛡️ ADMITGUARD: CONGRATULATIONS ${name.toUpperCase()}! Your admission application has been APPROVED. Check your email for enrollment steps! 🎓🎊`,
+      rejected: `🛡️ ADMITGUARD: Hello ${name}. We regret to inform you that your admission application was NOT selected at this time. We wish you success in your future endeavors. 🛡️`
+    };
+
+    await twilio.messages.create({
+      from: 'whatsapp:+14155238886', // Twilio Sandbox Number
+      body: templates[type],
+      to: `whatsapp:${finalPhone}`
+    });
+    console.log(`✅ [${type.toUpperCase()}] WhatsApp sent to ${name}`);
+  } catch (err) {
+    console.error('❌ WhatsApp Notification Error:', err.message);
+  }
+}
+
 initDb();
 
 // ── AUTH MIDDLEWARE ──────────────────────────────────────────────────────────
@@ -180,7 +214,12 @@ app.post('/api/submissions', async (req, res) => {
   const values = [id, timestamp, flagged, exceptions_used, JSON.stringify(fields), JSON.stringify(rationale), vector ? `[${vector.join(',')}]` : null];
   try {
     const result = await pool.query(queryText, values);
-    res.status(201).json(result.rows[0]);
+    const sub = result.rows[0];
+    
+    // AUTOMATION: Immediate Receipt Confirmation
+    sendWhatsAppAlert(fields, 'received');
+
+    res.status(201).json(sub);
   } catch (err) {
     console.error('Save Error', err);
     res.status(500).json({ error: 'Failed to save' });
@@ -196,8 +235,18 @@ app.patch('/api/submissions/:candidate_id/decision', async (req, res) => {
       'UPDATE submissions SET decision = $1 WHERE candidate_id = $2 RETURNING *',
       [decision, candidate_id]
     );
+
     if (result.rows.length === 0) return res.status(404).json({ error: 'Candidate not found' });
-    res.json(result.rows[0]);
+    
+    const sub = result.rows[0];
+    const fields = typeof sub.fields === 'string' ? JSON.parse(sub.fields) : sub.fields;
+
+    // AUTOMATION: Trigger Approval or Rejection notifications in background
+    if (decision === 'approved' || decision === 'rejected') {
+      sendWhatsAppAlert(fields, decision);
+    }
+
+    res.json(sub);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update decision' });
   }
