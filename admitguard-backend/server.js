@@ -90,10 +90,14 @@ async function verifyGoogleToken(req, res, next) {
     
     // Whitelist check from Environment Variables (Security: Fail-Closed)
     const adminEmailsRaw = process.env.ADMIN_EMAILS || "";
-    const whitelist = adminEmailsRaw.split(',').map(s => s.trim()).filter(s => s);
+    const officerEmailsRaw = process.env.OFFICER_EMAILS || ""; // New for extension
     
-    if (whitelist.length === 0 || !whitelist.includes(payload.email)) {
-      console.warn(`Unauth attempt from ${payload.email}. Whitelist: [${whitelist.join(',')}]`);
+    const adminWhitelist = adminEmailsRaw.split(',').map(s => s.trim()).filter(s => s);
+    const officerWhitelist = officerEmailsRaw.split(',').map(s => s.trim()).filter(s => s);
+    const fullWhitelist = [...adminWhitelist, ...officerWhitelist];
+    
+    if (fullWhitelist.length === 0 || !fullWhitelist.includes(payload.email)) {
+      console.warn(`Unauth attempt from ${payload.email}. Whitelist: [${fullWhitelist.join(',')}]`);
       return res.status(403).json({ error: 'Email not authorized' });
     }
 

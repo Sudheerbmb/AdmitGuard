@@ -4,9 +4,12 @@
 let RULES = {};
 const exceptionStates = {}; // { fieldId: { active: bool, rationaleValid: bool } }
 let autoSaveTimer = null;
+let authToken = null;
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  await checkAuth(false); // Silent check on boot
+  
   // 1. Load Local Defaults (Bootstrap)
   try {
     const localRes = await fetch(chrome.runtime.getURL('rules.json'));
@@ -128,6 +131,27 @@ function initListeners() {
   document.getElementById('newEntryBtn').addEventListener('click', resetForm);
   document.getElementById('openAuditBtn').addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('audit.html') });
+  });
+
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    checkAuth(true); // Interactive login
+  });
+}
+
+async function checkAuth(interactive = false) {
+  const status = document.getElementById('authStatus');
+  if (status) status.textContent = "Verifying Identity...";
+
+  chrome.identity.getAuthToken({ interactive }, (token) => {
+    if (chrome.runtime.lastError || !token) {
+      console.warn('Auth failed or cancelled');
+      if (status) status.textContent = "Authorization Required";
+      return;
+    }
+    
+    authToken = token;
+    document.getElementById('authOverlay').classList.add('hidden');
+    console.log('🛡️ Officer Authorized');
   });
 }
 
@@ -530,10 +554,20 @@ function saveSubmission(sub) {
   if (RULES.api_url && RULES.api_url !== 'YOUR_DEPLOYED_BACKEND_URL_HERE') {
     fetch(`${RULES.api_url}/api/submissions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
       body: JSON.stringify(sub)
     })
-    .then(r => console.log('Remote Sync: Success'))
+    .then(res => {
+      if (res.status === 401 || res.status === 403) {
+        document.getElementById('authOverlay').classList.remove('hidden');
+        document.getElementById('authStatus').textContent = "Session Expired / Unauthorized";
+      }
+      return res.json();
+    })
+    .then(data => console.log('Remote Sync: Success'))
     .catch(e => console.error('Remote Sync Error:', e));
   }
 }
