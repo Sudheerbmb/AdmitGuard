@@ -14,11 +14,19 @@ const app = express();
 const port = process.env.PORT || 3000;
 const client = new OAuth2Client("436650604205-ifoim7stupnfpp80u5ha2u2f6nouts5v.apps.googleusercontent.com");
 
-// 2. Initialize TWILIO (Safe fallback if SID/TOKEN are missing)
+// 2. Initialize TWILIO (Safe fallback)
 let twilio = null;
 if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
   twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
   console.log('🛡️ WhatsApp Automation: ONLINE');
+}
+
+// 3. Initialize REDIS (High-Speed Cache)
+const Redis = require('ioredis');
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+if (redis) {
+  redis.on('connect', () => console.log('🛡️ Redis Cache: ONLINE'));
+  redis.on('error', (err) => console.error('❌ Redis Error:', err.message));
 }
 
 app.use(cors({ origin: '*' }));
@@ -162,8 +170,24 @@ app.use('/api', (req, res, next) => {
 
 app.get('/api/rules', async (req, res) => {
   try {
+    // 1. Check Redis Cache First (Latency < 2ms)
+    if (redis) {
+      const cached = await redis.get('admitguard:rules');
+      if (cached) return res.json(JSON.parse(cached));
+    }
+
+    // 2. Cache Miss -> Fetch from PostgreSQL
     const result = await pool.query('SELECT config FROM rules WHERE id = 1');
-    res.json(result.rows[0].config);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Rules not found' });
+    
+    const rules = result.rows[0].config;
+
+    // 3. Update Redis Cache (TTL: 24 Hours)
+    if (redis) {
+      await redis.set('admitguard:rules', JSON.stringify(rules), 'EX', 86400);
+    }
+    
+    res.json(rules);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rules' });
   }
@@ -173,6 +197,12 @@ app.put('/api/rules', async (req, res) => {
   try {
     const { config } = req.body;
     await pool.query('UPDATE rules SET config = $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1', [JSON.stringify(config)]);
+    
+    // INVALIDATE CACHE: Force next fetch to use new rules
+    if (redis) {
+      await redis.del('admitguard:rules');
+    }
+
     res.json({ message: 'Rules updated successfully', config });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update rules' });

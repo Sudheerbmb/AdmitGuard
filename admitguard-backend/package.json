@@ -16,6 +16,7 @@
     "google-auth-library": "^10.6.2",
     "groq-sdk": "^0.3.3",
     "pg": "^8.11.3",
-    "twilio": "^5.0.0"
+    "twilio": "^5.0.0",
+    "ioredis": "^5.0.0"
   }
 }
