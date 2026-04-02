@@ -161,6 +161,9 @@ async function verifyGoogleToken(req, res, next) {
 }
 
 // ── ENDPOINTS ─────────────────────────────────────────────────────────────────
+app.get('/debug-sentry', (req, res) => {
+  throw new Error("🛡️ AdmitGuard Live Testing: Sentry works!");
+});
 
 // Apply global protection to all /api/ endpoints EXCEPT submissions (Public Intake)
 app.use('/api', (req, res, next) => {
@@ -302,10 +305,6 @@ app.delete('/api/submissions', async (req, res) => {
 });
 
 app.get('/health', (req, res) => res.send('🛡️ Backend Live'));
-
-app.get('/api/test-sentry', (req, res) => {
-  throw new Error("🛡️ AdmitGuard Live Testing: Sentry works!");
-});
 
 // ── AI ASSISTANT (RAG) powered by GROQ ──────────────────────────────────────────
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
