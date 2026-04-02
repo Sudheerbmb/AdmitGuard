@@ -303,6 +303,10 @@ app.delete('/api/submissions', async (req, res) => {
 
 app.get('/health', (req, res) => res.send('🛡️ Backend Live'));
 
+app.get('/api/test-sentry', (req, res) => {
+  throw new Error("🛡️ AdmitGuard Live Testing: Sentry works!");
+});
+
 // ── AI ASSISTANT (RAG) powered by GROQ ──────────────────────────────────────────
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
