@@ -161,10 +161,6 @@ async function verifyGoogleToken(req, res, next) {
 }
 
 // ── ENDPOINTS ─────────────────────────────────────────────────────────────────
-app.get('/debug-sentry', (req, res) => {
-  throw new Error("🛡️ AdmitGuard Live Testing: Sentry works!");
-});
-
 // Apply global protection to all /api/ endpoints EXCEPT submissions (Public Intake)
 app.use('/api', (req, res, next) => {
   // 1. Allow the extension to submit data publicly
