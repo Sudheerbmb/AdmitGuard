@@ -42,10 +42,10 @@ async function loadSubmissions() {
       if (res.ok) {
         const remoteData = await res.json();
         allSubmissions = remoteData.map(row => ({
-          id: row.candidate_id || row.id,
+          id: (row.candidate_id || row.id).toString(),
           timestamp: row.timestamp,
           flagged: row.flagged,
-          exceptions_used: row.exceptions_used,
+          exceptions_used: row.exceptions_used || [],
           fields: typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields,
           rationale: typeof row.rationale === 'string' ? JSON.parse(row.rationale) : row.rationale,
           decision: row.decision || 'pending'
@@ -144,7 +144,8 @@ function renderTable() {
 }
 
 function showDetail(id) {
-  const sub = allSubmissions.find(s => s.id === id);
+  const idStr = id.toString();
+  const sub = allSubmissions.find(s => s.id.toString() === idStr);
   if (!sub) return;
   const fields = [
     ['Name', sanitize(sub.fields.name)],

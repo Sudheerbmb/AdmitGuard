@@ -112,9 +112,17 @@ async function verifyGoogleToken(req, res, next) {
 
 // Apply global protection to all /api/ endpoints EXCEPT submissions (Public Intake)
 app.use('/api', (req, res, next) => {
-  // Allow the extension to submit data publicly
+  // 1. Allow the extension to submit data publicly
   if (req.path === '/submissions' && req.method === 'POST') return next();
-  // Protected routes
+  
+  // 2. Allow reading rules publicly so the extension can sync validation logic
+  if (req.path === '/rules' && req.method === 'GET') return next();
+
+  // 3. Allow reading submissions (for extension Audit page). 
+  // Note: In a production environment, this should be protected by a simpler API key or Auth.
+  if (req.path === '/submissions' && req.method === 'GET') return next();
+
+  // Protected routes (PUT rules, PATCH decisions, DELETE, AI Analyze)
   return verifyGoogleToken(req, res, next);
 });
 
