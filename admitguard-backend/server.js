@@ -88,11 +88,12 @@ async function verifyGoogleToken(req, res, next) {
     });
     const payload = ticket.getPayload();
     
-    // Whitelist check from Environment Variables (Hidden from GitHub)
+    // Whitelist check from Environment Variables (Security: Fail-Closed)
     const adminEmailsRaw = process.env.ADMIN_EMAILS || "";
     const whitelist = adminEmailsRaw.split(',').map(s => s.trim()).filter(s => s);
     
-    if (whitelist.length > 0 && !whitelist.includes(payload.email)) {
+    if (whitelist.length === 0 || !whitelist.includes(payload.email)) {
+      console.warn(`Unauth attempt from ${payload.email}. Whitelist: [${whitelist.join(',')}]`);
       return res.status(403).json({ error: 'Email not authorized' });
     }
 
