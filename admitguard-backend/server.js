@@ -110,8 +110,13 @@ async function verifyGoogleToken(req, res, next) {
 
 // ── ENDPOINTS ─────────────────────────────────────────────────────────────────
 
-// Apply global protection to all /api/ endpoints
-app.use('/api', verifyGoogleToken);
+// Apply global protection to all /api/ endpoints EXCEPT submissions (Public Intake)
+app.use('/api', (req, res, next) => {
+  // Allow the extension to submit data publicly
+  if (req.path === '/submissions' && req.method === 'POST') return next();
+  // Protected routes
+  return verifyGoogleToken(req, res, next);
+});
 
 app.get('/api/rules', async (req, res) => {
   try {

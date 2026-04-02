@@ -9,18 +9,7 @@
       "128": "icons/icon128.png"
     }
   },
-  "permissions": [
-    "storage",
-    "identity"
-  ],
-  "oauth2": {
-    "client_id": "436650604205-g79pklsqa1k192nqn6gfdepkn4c1k31v.apps.googleusercontent.com",
-    "scopes": [
-      "email",
-      "profile",
-      "openid"
-    ]
-  },
+  "permissions": ["storage"],
   "host_permissions": [
     "https://*.onrender.com/*",
     "http://localhost:3000/*"
