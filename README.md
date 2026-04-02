@@ -12,23 +12,31 @@ AdmitGuard introduces a novel, distributed approach to admissions governance, le
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) 
 ![JavaScript](https://img.shields.io/badge/javascript-%23F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=black) 
 ![Chrome](https://img.shields.io/badge/chrome%20extension-%234285F4.svg?style=for-the-badge&logo=google-chrome&logoColor=white) 
-![Nodejs](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) 
-![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB) 
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white) 
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white)
+![Sentry](https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white) 
 ![Vector](https://img.shields.io/badge/pgvector-%23336791.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq%20AI-%23f26522.svg?style=for-the-badge&logo=ai&logoColor=white)
 ![Llama 3](https://img.shields.io/badge/Llama--3.3--70B-blue?style=for-the-badge&logo=meta&logoColor=white)
 ![Auth](https://img.shields.io/badge/Google--OAuth--2.0-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![Nodejs](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white) 
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 | Module | Technology | Functional Role |
 | :--- | :--- | :--- |
 | **Edge Engine** | ![JS](https://img.shields.io/badge/JS-F7DF1E?logo=javascript&logoColor=black) ![Chrome](https://img.shields.io/badge/Chrome-4285F4?logo=googlechrome&logoColor=white) | Real-time governance & local draft persistence |
 | **Command Center** | ![Auth](https://img.shields.io/badge/Google-4285F4?logo=google&logoColor=white) ![HTML](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) | Secured Admin dashboard with JWT session state |
 | **Backend Core** | ![Node](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white) | Identity Verification (OIDC) & API Orchestration |
-| **Vector DB** | ![Postgres](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-336791) | High-performance storage of structured & latent data |
+| **Persistence** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-336791) | Transactional storage & high-dim vector similarity |
+| **Automation** | ![Twilio](https://img.shields.io/badge/Twilio-F22F46?logo=twilio&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white) | Real-time notifications & low-latency rule caching |
+| **Observability** | ![Sentry](https://img.shields.io/badge/Sentry-362D59?logo=sentry&logoColor=white) | Enterprise-grade error tracking & performance metrics |
 | **Inference Layer** | ![Groq](https://img.shields.io/badge/Groq-f26522) ![Llama](https://img.shields.io/badge/Llama3-0668E1) | Natural Language Reasoning & SQL Planning |
-| **Embeddings** | ![Transformers](https://img.shields.io/badge/Transformers-gray?logo=huggingface) ![Xenova](https://img.shields.io/badge/Xenova-6DA55F) | Offline-capable vector generation |
 
 ---
 
@@ -101,13 +109,15 @@ To ensure institutional record-keeping is protected from unauthorized access, Ad
 To ensure institutional-grade availability and low-latency inference, AdmitGuard implements a multi-cloud distribution strategy:
 
 ### 🗺️ Infrastructure Stack
-![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white) 
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white) 
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Upstash](https://img.shields.io/badge/Upstash-00E9A3?style=for-the-badge&logo=upstash&logoColor=white)
 
-*   **Persistence Layer (Railway)**: The PostgreSQL instance, along with the `pgvector` semantic store, is hosted on **Railway**. This provides high-performance vectorized operations with automatic backup and horizontal scaling capabilities.
-*   **Application Compute (Render)**: The Node.js/Express.js backend resides on **Render**, serving as the secure orchestrator between client requests, database transactions, and the external Groq inference API.
-*   **Managerial Portal (Vercel)**: The Administrative Dashboard (Frontend) is distributed via **Vercel's global CDN**, ensuring instantaneous loading of candidate pipelines and analytics regardless of the manager's geographic location.
+*   **Persistence Layer (Supabase)**: The PostgreSQL instance, along with the `pgvector` semantic store, is hosted on **Supabase**. This provides high-performance vectorized operations with integrated connection pooling and real-time data synchronization.
+*   **Application Compute (Render)**: The Node.js/Express.js backend resides on **Render**, serving as the secure orchestrator between client requests, database transactions, and high-speed external APIs.
+*   **Global Caching (Upstash Redis)**: Low-latency rule delivery and rate-limiting are handled by **Upstash Redis**, ensuring the Edge Client receives governance updates in <10ms.
+*   **Managerial Portal (Vercel)**: The Administrative Dashboard (Frontend) is distributed via **Vercel's global CDN**, ensuring instantaneous loading of candidate pipelines and analytics.
 *   **Governance Edge (Chrome Web Store)**: The browser extension is distributed as a hardened package, enabling localized rule enforcement directly within the officer's browser environment.
 
 ---
@@ -140,8 +150,27 @@ graph LR
 
 ---
 
-## 9. Conclusions
-AdmitGuard represents a shift in admissions technology from passive record-keeping to **active governance**. By combining deterministic algorithms like Verhoeff with stochastic AI models like Llama 3, the framework provides a "Human-in-the-Loop" system that is both rigid in its compliance and flexible in its intelligence. It significantly reduces the operational overhead of auditing thousands of admissions while increasing the transparency of the decision-making process.
+## 10. Automated Communication & Notification Pipeline
+
+AdmitGuard bridges the gap between institutional decisions and student awareness through an automated **Twilio WhatsApp Pipeline**.
+
+*   **Submission Receipts**: Instant confirmation messages are dispatched the moment a candidate triggers the Edge Engine, reducing candidate anxiety and support volume.
+*   **Decision Triggers**: When a manager clicks "Approve" or "Reject" on the Command Center, a background task generates a personalized WhatsApp notification reflecting the specific outcome.
+*   **Async Processing**: All notifications are processed asynchronously to ensure that the Managerial Dashboard remains highly responsive even during high-volume notification bursts.
+
+---
+
+## 11. Monitoring & Enterprise Observability
+
+To ensure institutional-grade uptime, AdmitGuard implements a two-tier observability stack:
+
+*   **Real-time Error Tracking (Sentry)**: Every backend exception, AI reasoning failure, or database timeout is captured by **Sentry**. This provides developers with deep stack-traces and candidate context to resolve production issues before they affect the intake pipeline.
+*   **Low-Latency Caching (Redis)**: Utilizing the **Least Recently Used (LRU)** eviction policy, Upstash Redis caches institutional rules and AI insights. This prevents "Database Bottlenecks" during peak admission cycles and ensures the system remains "snappy" even under heavy load.
+
+---
+
+## 12. Conclusions
+AdmitGuard represents a shift in admissions technology from passive record-keeping to **active, automated governance**. By combining deterministic algorithms like Verhoeff with stochastic AI models like Llama 3 and real-time triggers via Twilio/Redis, the framework provides a "Human-in-the-Loop" system that is both rigid in its compliance and frictionless in its communication.
 
 ---
 *Technical Documentation & Research Report for the AdmitGuard Project.*
