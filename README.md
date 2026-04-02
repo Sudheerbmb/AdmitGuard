@@ -5,62 +5,7 @@ AdmitGuard introduces a novel, distributed approach to admissions governance, le
 
 ---
 
-## 1. Introduction
-The student admissions process in modern institutions is fraught with two primary challenges: **Data Entry Integrity** and **Auditability**. Conventional systems rely on post-facto verification, which is both slow and prone to oversight. AdmitGuard addresses these by implementing a **"Governance-at-the-Source"** model. This framework ensures that any deviation from predetermined academic or institutional criteria is flagged instantly and requires a human-provided, AI-audited rationale for submission.
-
----
-
-## 2. System Architecture & Methodology
-AdmitGuard is architected as a three-tier distributed system comprising an Edge Client, a Vectorized Backend, and an Oversight Dashboard.
-
-### 2.1 The Edge Client (Chrome Extension)
-The client-side engine is responsible for real-time validation. It operates on two distinct logical planes:
-*   **Hard-Rule Plane (Strict Validation)**: Uses deterministic algorithms to prevent non-compliant data from being submitted.
-*   **Soft-Rule Plane (Conditional Exception)**: Dynamically evaluates candidate profiles against cloud-synchronized rules (Age, GPA, Graduation Year). If a "soft violation" occurs, a state-machine prevents submission until a valid **Exception Rationale** is provided.
-
-### 2.2 Managerial Oversight & Advanced Analytics Interface (Admin Dashboard)
-A centralized command-and-control dashboard structured to facilitate high-resolution auditing and decision-making. 
-*   **Granular PII Masking Architecture**: To maintain GDPR and institutional data privacy compliance, the interface implements a one-click **PII Layer** that dynamically masks sensitive identifying fields (Email, Aadhaar, Phone) during the initial audit phase.
-*   **Operational Pipeline Management**: Implements a state-machine driven **Pipeline View** (Kanban style). It allows managers to visually transition candidates between `Pending`, `Flagged`, `Approved`, and `Rejected` statuses, ensuring zero-loss pipeline visibility.
-*   **Real-time Intelligence Integration**: Directly interfaces with the **Groq-powered RAG engine**, providing an interactive sidebar where managers can ask complex structural questions like *"Identify all 2024 graduates with inconsistent screening scores"* and receive immediate, linked profile recommendations.
-*   **Adaptive Rule Sculpting**: Enables managers to modify institutional criteria (thresholds, keyword requirements, checksum toggles) instantly. These changes are versioned and propagated to all Edge Clients upon their next polling cycle.
-
----
-
----
-
-## 3. Data Integrity & Algorithms
-AdmitGuard employs sophisticated mathematical models to ensure data validity.
-
-### 3.1 Verhoeff Error Detection
-To combat identity document fraud (e.g., Aadhaar entry), the framework implements the **Verhoeff Algorithm**. Unlike simple modulo-based checks, Verhoeff uses a non-commutative group $D_5$ (Dihedral group of order 10).
-*   **Permutation Table**: Rotates digits to catch transcription errors.
-*   **D5 Multiplication**: Ensures that single-digit errors and most adjacent transposition errors are detected.
-
-### 3.2 Dynamic Rule Synchronization
-The system uses a polling-and-cache mechanism to ensure that the Edge Client always has the latest institutional criteria. Rules are stored in the backend as `JSONB` structures, allowing for field-level flexibility without schema migrations.
-
----
-
-## 4. AI & Semantic Reasoning Engine
-The core intelligence of AdmitGuard is built upon a **Retrieval-Augmented Generation (RAG)** pipeline.
-
-### 4.1 Rationale Vectorization
-When an officer provides a justification for a rule exception, the string is processed through the **Xenova `all-MiniLM-L6-v2`** model. This generates a 384-dimensional dense vector representing the "semantic weight" of the justification.
-$$v = \text{Embed}(\text{Rationale})$$
-These vectors are stored in a **PostgreSQL `vector`** column, allowing for cosine similarity queries.
-
-### 4.2 Multi-Stage AI Reasoning (Groq Llama 3)
-The AI Assistant (`/api/analyze`) uses a specialized agentic workflow to answer manager queries:
-1.  **Intent Classification**: The agent analyzes if the user is asking for **Quantitative** (e.g., "Top 5 scores") or **Qualitative** (e.g., "Trends in grad year waivers") data.
-2.  **Query Generation**:
-    *   **SQL Generation**: For quantitative queries, the AI writes and executes PostgreSQL queries against the JSONB fields.
-    *   **Vector Search**: For qualitative queries, it performs a similarity search ($1 - \text{cosine\_distance}$) to retrieve the most semantically relevant candidate files.
-3.  **Synthesis**: The final response combines raw numerical data with latent pattern recognition (e.g., *"There is a 30% increase in GPA waivers for 2024 graduates, suggesting the current threshold may be statistically too high"*).
-
----
-
-## 5. Technical Infrastructure & Component Matrix
+## 1. Technical Infrastructure & Component Matrix
 
 ### 🚀 Core Technologies Leveraged
 ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) 
@@ -83,6 +28,59 @@ The AI Assistant (`/api/analyze`) uses a specialized agentic workflow to answer 
 | **Vector DB** | ![Postgres](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-336791) | High-performance storage of structured & latent data |
 | **Inference Layer** | ![Groq](https://img.shields.io/badge/Groq-f26522) ![Llama](https://img.shields.io/badge/Llama3-0668E1) | Natural Language Reasoning & SQL Planning |
 | **Embeddings** | ![Transformers](https://img.shields.io/badge/Transformers-gray?logo=huggingface) ![Xenova](https://img.shields.io/badge/Xenova-6DA55F) | Offline-capable vector generation |
+
+---
+
+## 2. Introduction
+The student admissions process in modern institutions is fraught with two primary challenges: **Data Entry Integrity** and **Auditability**. Conventional systems rely on post-facto verification, which is both slow and prone to oversight. AdmitGuard addresses these by implementing a **"Governance-at-the-Source"** model. This framework ensures that any deviation from predetermined academic or institutional criteria is flagged instantly and requires a human-provided, AI-audited rationale for submission.
+
+---
+
+## 3. System Architecture & Methodology
+AdmitGuard is architected as a three-tier distributed system comprising an Edge Client, a Vectorized Backend, and an Oversight Dashboard.
+
+### 3.1 The Edge Client (Chrome Extension)
+The client-side engine is responsible for real-time validation. It operates on two distinct logical planes:
+*   **Hard-Rule Plane (Strict Validation)**: Uses deterministic algorithms to prevent non-compliant data from being submitted.
+*   **Soft-Rule Plane (Conditional Exception)**: Dynamically evaluates candidate profiles against cloud-synchronized rules (Age, GPA, Graduation Year). If a "soft violation" occurs, a state-machine prevents submission until a valid **Exception Rationale** is provided.
+
+### 3.2 Managerial Oversight & Advanced Analytics Interface (Admin Dashboard)
+A centralized command-and-control dashboard structured to facilitate high-resolution auditing and decision-making. 
+*   **Granular PII Masking Architecture**: To maintain GDPR and institutional data privacy compliance, the interface implements a one-click **PII Layer** that dynamically masks sensitive identifying fields (Email, Aadhaar, Phone) during the initial audit phase.
+*   **Operational Pipeline Management**: Implements a state-machine driven **Pipeline View** (Kanban style). It allows managers to visually transition candidates between `Pending`, `Flagged`, `Approved`, and `Rejected` statuses, ensuring zero-loss pipeline visibility.
+*   **Real-time Intelligence Integration**: Directly interfaces with the **Groq-powered RAG engine**, providing an interactive sidebar where managers can ask complex structural questions like *"Identify all 2024 graduates with inconsistent screening scores"* and receive immediate, linked profile recommendations.
+*   **Adaptive Rule Sculpting**: Enables managers to modify institutional criteria (thresholds, keyword requirements, checksum toggles) instantly. These changes are versioned and propagated to all Edge Clients upon their next polling cycle.
+
+---
+
+## 4. Data Integrity & Algorithms
+AdmitGuard employs sophisticated mathematical models to ensure data validity.
+
+### 4.1 Verhoeff Error Detection
+To combat identity document fraud (e.g., Aadhaar entry), the framework implements the **Verhoeff Algorithm**. Unlike simple modulo-based checks, Verhoeff uses a non-commutative group $D_5$ (Dihedral group of order 10).
+*   **Permutation Table**: Rotates digits to catch transcription errors.
+*   **D5 Multiplication**: Ensures that single-digit errors and most adjacent transposition errors are detected.
+
+### 4.2 Dynamic Rule Synchronization
+The system uses a polling-and-cache mechanism to ensure that the Edge Client always has the latest institutional criteria. Rules are stored in the backend as `JSONB` structures, allowing for field-level flexibility without schema migrations.
+
+---
+
+## 5. AI & Semantic Reasoning Engine
+The core intelligence of AdmitGuard is built upon a **Retrieval-Augmented Generation (RAG)** pipeline.
+
+### 5.1 Rationale Vectorization
+When an officer provides a justification for a rule exception, the string is processed through the **Xenova `all-MiniLM-L6-v2`** model. This generates a 384-dimensional dense vector representing the "semantic weight" of the justification.
+$$v = \text{Embed}(\text{Rationale})$$
+These vectors are stored in a **PostgreSQL `vector`** column, allowing for cosine similarity queries.
+
+### 5.2 Multi-Stage AI Reasoning (Groq Llama 3)
+The AI Assistant (`/api/analyze`) uses a specialized agentic workflow to answer manager queries:
+1.  **Intent Classification**: The agent analyzes if the user is asking for **Quantitative** (e.g., "Top 5 scores") or **Qualitative** (e.g., "Trends in grad year waivers") data.
+2.  **Query Generation**:
+    *   **SQL Generation**: For quantitative queries, the AI writes and executes PostgreSQL queries against the JSONB fields.
+    *   **Vector Search**: For qualitative queries, it performs a similarity search ($1 - \text{cosine\_distance}$) to retrieve the most semantically relevant candidate files.
+3.  **Synthesis**: The final response combines raw numerical data with latent pattern recognition (e.g., *"There is a 30% increase in GPA waivers for 2024 graduates, suggesting the current threshold may be statistically too high"*).
 
 ---
 
