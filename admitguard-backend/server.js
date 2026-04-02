@@ -1,5 +1,15 @@
-// AdmitGuard — backend server.js
 // Handles PostgreSQL storage and Manager Decisions
+const Sentry = require("@sentry/node");
+const { nodeProfilingIntegration } = require("@sentry/profiling-node");
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  tracesSampleRate: 1.0,
+  profilesSampleRate: 1.0,
+});
 
 const express = require('express');
 const cors = require('cors');
@@ -375,9 +385,12 @@ app.post('/api/analyze', async (req, res) => {
 
     res.json({ response: finalResponse.choices[0].message.content });
   } catch (err) {
+    Sentry.captureException(err);
     console.error('AI Analysis Error:', err);
     res.status(500).json({ error: 'AI analysis failed' });
   }
 });
+
+Sentry.setupExpressErrorHandler(app);
 
 app.listen(port, () => console.log(`🛡️ Port ${port}`));
