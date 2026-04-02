@@ -8,9 +8,11 @@ const { Pool } = require('pg');
 require('dotenv').config();
 const Groq = require('groq-sdk');
 const { pipeline } = require('@xenova/transformers');
+const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
 const port = process.env.PORT || 3000;
+const client = new OAuth2Client("436650604205-ifoim7stupnfpp80u5ha2u2f6nouts5v.apps.googleusercontent.com");
 
 app.use(cors({ origin: '*' }));
 app.use(bodyParser.json());
@@ -71,7 +73,40 @@ const initDb = async () => {
 };
 initDb();
 
+// ── AUTH MIDDLEWARE ──────────────────────────────────────────────────────────
+async function verifyGoogleToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or malformed token' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: "436650604205-ifoim7stupnfpp80u5ha2u2f6nouts5v.apps.googleusercontent.com",
+    });
+    const payload = ticket.getPayload();
+    
+    // Whitelist check from Environment Variables (Hidden from GitHub)
+    const adminEmailsRaw = process.env.ADMIN_EMAILS || "";
+    const whitelist = adminEmailsRaw.split(',').map(s => s.trim()).filter(s => s);
+    
+    if (whitelist.length > 0 && !whitelist.includes(payload.email)) {
+      return res.status(403).json({ error: 'Email not authorized' });
+    }
+
+    req.user = payload;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Auth Failed: Token invalid' });
+  }
+}
+
 // ── ENDPOINTS ─────────────────────────────────────────────────────────────────
+
+// Apply global protection to all /api/ endpoints
+app.use('/api', verifyGoogleToken);
 
 app.get('/api/rules', async (req, res) => {
   try {

@@ -6,6 +6,11 @@ let selectedIds = new Set();
 let piiMaskingEnabled = true;
 let RULES = {};
 
+function getAuthHeader() {
+  const token = sessionStorage.getItem('admitguard_auth_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRules();
   await loadSubmissions();
@@ -60,7 +65,7 @@ async function loadRules() {
   const fallbackUrl = 'https://admitguard.onrender.com';
   try {
     // Try to get rules from backend first
-    const res = await fetch(`${fallbackUrl}/api/rules`);
+    const res = await fetch(`${fallbackUrl}/api/rules`, { headers: getAuthHeader() });
     if (res.ok) {
       RULES = await res.json();
       RULES.api_url = fallbackUrl;
@@ -82,7 +87,7 @@ async function loadSubmissions() {
   btn.textContent = 'Syncing...';
   
   try {
-    const res = await fetch(`${RULES.api_url}/api/submissions`);
+    const res = await fetch(`${RULES.api_url}/api/submissions`, { headers: getAuthHeader() });
     if (res.ok) {
       const data = await res.json();
       allSubmissions = data.map(row => ({
@@ -310,7 +315,10 @@ async function patchDecision(id, decision, isBulk = false) {
   try {
     const res = await fetch(`${RULES.api_url}/api/submissions/${id}/decision`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
       body: JSON.stringify({ decision })
     });
     
@@ -527,7 +535,10 @@ async function saveRules() {
   try {
     const res = await fetch(`${RULES.api_url}/api/rules`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
       body: JSON.stringify({ config: newConfig })
     });
     if (res.ok) {
@@ -611,7 +622,10 @@ async function askAiAssistant() {
 
     const res = await fetch(`${RULES.api_url}/api/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
       body: JSON.stringify({ query, context })
     });
 

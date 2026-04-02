@@ -141,11 +141,11 @@
     // Simple check for whitelist (Simulated for Demo)
     function onSignIn(response) {
       const responsePayload = decodeJwt(response.credential);
-
-      // Replace with your real email to test
       const whitelist = ['sudheermsdvk@gmail.com', 'admin@admitguard.com'];
 
       if (whitelist.length === 0 || whitelist.includes(responsePayload.email)) {
+        // Critical: Store the raw credential (THE TOKEN) to send to backend
+        sessionStorage.setItem('admitguard_auth_token', response.credential);
         sessionStorage.setItem('admitguard_admin_user', JSON.stringify(responsePayload));
         window.location.href = 'admin.html';
       } else {
