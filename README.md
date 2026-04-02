@@ -86,9 +86,25 @@ The AI Assistant (`/api/analyze`) uses a specialized agentic workflow to answer 
 
 ---
 
-## 6. Logic Flow & State Diagrams
+## 6. Deployment & Distributed Cloud Topology
 
-### 6.1 Submission Validation Flow
+To ensure institutional-grade availability and low-latency inference, AdmitGuard implements a multi-cloud distribution strategy:
+
+### 🗺️ Infrastructure Stack
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white) 
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white) 
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+
+*   **Persistence Layer (Railway)**: The PostgreSQL instance, along with the `pgvector` semantic store, is hosted on **Railway**. This provides high-performance vectorized operations with automatic backup and horizontal scaling capabilities.
+*   **Application Compute (Render)**: The Node.js/Express.js backend resides on **Render**, serving as the secure orchestrator between client requests, database transactions, and the external Groq inference API.
+*   **Managerial Portal (Vercel)**: The Administrative Dashboard (Frontend) is distributed via **Vercel's global CDN**, ensuring instantaneous loading of candidate pipelines and analytics regardless of the manager's geographic location.
+*   **Governance Edge (Chrome Web Store)**: The browser extension is distributed as a hardened package, enabling localized rule enforcement directly within the officer's browser environment.
+
+---
+
+## 7. Logic Flow & State Diagrams
+
+### 7.1 Submission Validation Flow
 ```mermaid
 graph TD
     A[Data Entry] --> B{Hard Rules?}
@@ -101,7 +117,7 @@ graph TD
     D -- PASS --> I[Submit as CLEAN]
 ```
 
-### 6.2 AI RAG Pipeline
+### 7.2 AI RAG Pipeline
 ```mermaid
 graph LR
     A[Manager Query] --> B[AI Planner]
@@ -114,7 +130,7 @@ graph LR
 
 ---
 
-## 7. Conclusions
+## 8. Conclusions
 AdmitGuard represents a shift in admissions technology from passive record-keeping to **active governance**. By combining deterministic algorithms like Verhoeff with stochastic AI models like Llama 3, the framework provides a "Human-in-the-Loop" system that is both rigid in its compliance and flexible in its intelligence. It significantly reduces the operational overhead of auditing thousands of admissions while increasing the transparency of the decision-making process.
 
 ---
