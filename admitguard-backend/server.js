@@ -18,10 +18,14 @@ const { Pool } = require('pg');
 require('dotenv').config();
 const Groq = require('groq-sdk');
 const { OAuth2Client } = require('google-auth-library');
+const { Resend } = require('resend');
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3000;
 const client = new OAuth2Client("436650604205-ifoim7stupnfpp80u5ha2u2f6nouts5v.apps.googleusercontent.com");
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // 2. Initialize TWILIO (Safe fallback)
 let twilio = null;
@@ -125,6 +129,86 @@ async function sendWhatsAppAlert(fields, type) {
 }
 
 initDb();
+
+// ── PROFESSIONAL EMAIL & PDF ENGINE ──────────────────────────────────────────
+async function generateApprovalPDF(sub) {
+  return new Promise((resolve) => {
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    let buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
+
+    // HEADER - Branded Banner
+    doc.rect(0, 0, 612, 100).fill('#0b0c10'); // Dark Theme
+    doc.fillColor('#00f2ff').fontSize(30).text('AdmitGuard Registry', 50, 35, { characterSpacing: 2 });
+    doc.fontSize(10).fillColor('#ffffff').text('AUTOMATED GOVERNANCE & ADMISSION SYSTEM', 50, 70);
+
+    // WATERMARK (Simulated)
+    doc.fillColor('#eeeeee').fontSize(80).opacity(0.1).text('VERIFIED', 100, 350, { rotation: 45 });
+    doc.opacity(1).fillColor('#333333');
+
+    // BODY
+    const fields = typeof sub.fields === 'string' ? JSON.parse(sub.fields) : sub.fields;
+    doc.moveDown(5);
+    doc.fontSize(20).text('OFFICIAL LETTER OF ADMISSION', { align: 'center', underline: true });
+    doc.moveDown(2);
+    
+    doc.fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`);
+    doc.text(`Certificate No: AG-${sub.candidate_id}-${Math.floor(Math.random() * 9000) + 1000}`);
+    doc.moveDown(2);
+    
+    doc.text(`Dear ${fields.name},`);
+    doc.moveDown();
+    doc.text('We are pleased to inform you that your application for admission has been officially reviewed and APPROVED by our AI-augmented governance board.', { lineGap: 5 });
+    doc.moveDown();
+    doc.text(`Based on your screening score of ${fields.screening_score} and your academic records (${fields.percentage}%), you have met all institutional criteria.`);
+    
+    doc.moveDown(3);
+    doc.fontSize(14).text('Admission Details:', { underline: true });
+    doc.moveDown();
+    doc.fontSize(11).text(`- Student Name: ${fields.name}`);
+    doc.text(`- Student Email: ${fields.email}`);
+    doc.text(`- Qualification: ${fields.qualification}`);
+    doc.text(`- Intake Year: ${fields.grad_year}`);
+
+    // DIGITAL SIGNATURE
+    doc.moveDown(4);
+    doc.fontSize(10).text('Successfully Authenticated by:', 50, doc.y);
+    doc.fontSize(15).font('Courier-Bold').fillColor('#00f2ff').text('AdmitGuard Registry Board', 50, doc.y + 5);
+    doc.fontSize(8).fillColor('#999999').text('Digitally signed via Encrypted Identity Key 0x48A...');
+
+    // FOOTER
+    doc.fontSize(8).text('This is an auto-generated document protected by AdmitGuard distributed governance. No physical signature required.', 50, 750, { align: 'center', color: '#aaaaaa' });
+    
+    doc.end();
+  });
+}
+
+async function sendEmailNotification(sub, type) {
+  if (!resend) return console.log('🛡️ Email Skip: Missing Resend API Key.');
+  
+  const fields = typeof sub.fields === 'string' ? JSON.parse(sub.fields) : sub.fields;
+  try {
+    let emailConfig = {
+      from: 'AdmitGuard <onboarding@resend.dev>', // Resend verified domain or default
+      to: [fields.email],
+      subject: type === 'received' ? '🛡️ Application Received - AdmitGuard' : '🎓 Congratulations! Your Admission is Approved',
+      html: type === 'received' 
+        ? `<h1>Hello ${fields.name}</h1><p>Your application was successfully received and is currently in the <strong>PENDING</strong> stage for audit.</p>`
+        : `<h1>Great News!</h1><p>Your admission for ${fields.grad_year} has been <strong>APPROVED</strong>. Please find your official letter attached below.</p>`
+    };
+
+    if (type === 'approved') {
+      const pdfBuffer = await generateApprovalPDF(sub);
+      emailConfig.attachments = [{ filename: `Admission_Letter_${sub.candidate_id}.pdf`, content: pdfBuffer }];
+    }
+
+    await resend.emails.send(emailConfig);
+    console.log(`✅ [${type.toUpperCase()}] Email sent to ${fields.email}`);
+  } catch (err) {
+    console.error('❌ Email Error:', err.message);
+  }
+}
 
 // ── AUTH MIDDLEWARE ──────────────────────────────────────────────────────────
 async function verifyGoogleToken(req, res, next) {
@@ -261,6 +345,7 @@ app.post('/api/submissions', async (req, res) => {
     
     // AUTOMATION: Immediate Receipt Confirmation
     sendWhatsAppAlert(fields, 'received');
+    sendEmailNotification(sub, 'received');
 
     res.status(201).json(sub);
   } catch (err) {
@@ -287,6 +372,7 @@ app.patch('/api/submissions/:candidate_id/decision', async (req, res) => {
     // AUTOMATION: Trigger Approval or Rejection notifications in background
     if (decision === 'approved' || decision === 'rejected') {
       sendWhatsAppAlert(fields, decision);
+      if (decision === 'approved') sendEmailNotification(sub, 'approved');
     }
 
     res.json(sub);
