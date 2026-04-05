@@ -4,6 +4,14 @@ FROM node:18-slim
 # Create and set the working directory
 WORKDIR /usr/src/app
 
+# --- FIX: Install build tools for @sentry/profiling-node ---
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+# ----------------------------------------------------------
+
 # Copy package files first to leverage Docker's layer caching for faster builds
 COPY package*.json ./
 
