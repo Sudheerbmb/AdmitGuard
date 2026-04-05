@@ -204,8 +204,9 @@ function renderTable() {
     const statusBadge = sub.flagged ? `<span class="badge flagged">⚑ Flagged</span>` : `<span class="badge ok">✓ Clean</span>`;
     
     return `
-      <tr onclick="showDetail(${sub.id})" style="cursor:pointer">
+      <tr data-id="${sub.id}" style="cursor:pointer" class="audit-row">
         <td style="font-size:10px; color:var(--muted)">#${sub.id.toString().slice(-4)}</td>
+
         <td>${new Date(sub.timestamp).toLocaleDateString()}</td>
         <td style="font-weight:600">${sanitize(sub.fields?.name)}</td>
         <td style="color:var(--muted)">${sanitize(mask(sub.fields?.email, 'email'))}</td>
@@ -216,7 +217,14 @@ function renderTable() {
         <td style="text-align:right">→</td>
       </tr>`;
   }).join('');
+
+  // CSP-Friendly Event Delegation for row clicks
+  tbody.onclick = (e) => {
+    const row = e.target.closest('.audit-row');
+    if (row) showDetail(row.dataset.id);
+  };
 }
+
 
 function showDetail(id) {
   const idStr = id.toString();

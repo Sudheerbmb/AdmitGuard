@@ -202,8 +202,8 @@ function renderTable() {
     const decisionBadge = sub.decision === 'pending' ? '<span class="badge badge-pending">PENDING</span>' : `<span class="badge badge-${sub.decision}">${sub.decision.toUpperCase()}</span>`;
 
     return `
-      <tr onclick="showDetails(${sub.id})">
-        <td onclick="event.stopPropagation()">
+      <tr data-id="${sub.id}" class="clickable-row">
+        <td class="checkbox-cell">
           <input type="checkbox" class="row-select" data-id="${sub.id}" ${isSelected ? 'checked' : ''}>
         </td>
         <td class="name-cell">
@@ -217,25 +217,41 @@ function renderTable() {
           ${sub.exceptions_used.map(e => `<span class="ex-tag">${e.replace('_', ' ')}</span>`).join('') || '—'}
         </td>
         <td>${decisionBadge}</td>
-        <td style="display: flex; gap: 8px;">
-          <button class="btn-sm approve" onclick="event.stopPropagation(); patchDecision(${sub.id}, 'approved')">APPROVE</button>
-          <button class="btn-sm reject" onclick="event.stopPropagation(); patchDecision(${sub.id}, 'rejected')">REJECT</button>
+        <td style="display: flex; gap: 8px;" class="action-cell">
+          <button class="btn-sm approve action-btn" data-id="${sub.id}" data-action="approved">APPROVE</button>
+          <button class="btn-sm reject action-btn" data-id="${sub.id}" data-action="rejected">REJECT</button>
         </td>
       </tr>
     `;
 
+
   }).join('');
 
-  // Handle checkboxes
-  document.querySelectorAll('.row-select').forEach(cb => {
-    cb.addEventListener('change', (e) => {
-      const id = parseInt(e.target.dataset.id);
-      if (e.target.checked) selectedIds.add(id);
-      else selectedIds.delete(id);
-      updateBulkUI();
-    });
-  });
+  // CSP-Friendly listeners
+  tbody.onclick = (e) => {
+    const row = e.target.closest('.clickable-row');
+    const actionBtn = e.target.closest('.action-btn');
+    const checkbox = e.target.closest('.row-select');
+
+    if (actionBtn) {
+        e.stopPropagation();
+        patchDecision(actionBtn.dataset.id, actionBtn.dataset.action);
+        return;
+    }
+    if (checkbox) {
+        e.stopPropagation();
+        const id = parseInt(checkbox.dataset.id);
+        if (checkbox.checked) selectedIds.add(id);
+        else selectedIds.delete(id);
+        updateBulkUI();
+        return;
+    }
+    if (row) {
+        showDetails(row.dataset.id);
+    }
+  };
 }
+
 
 function mask(str, type) {
   if (!piiMaskingEnabled || !str) return str;
@@ -477,7 +493,7 @@ async function renderCounselors() {
         container.innerHTML = stats.map(s => {
             const appRate = s.total_submissions > 0 ? Math.round((s.approved_count / s.total_submissions) * 100) : 0;
             return `
-                <tr>
+                <tr class="staff-row">
                     <td style="font-weight:600;">${sanitize(s.name)}</td>
                     <td style="font-family:monospace; color:var(--muted)">@${sanitize(s.username)}</td>
                     <td>${s.total_submissions}</td>
@@ -487,11 +503,18 @@ async function renderCounselors() {
                             <span style="font-size:10px;">${appRate}%</span>
                         </div>
                     </td>
-                    <td><button class="btn-sm reject" onclick="deleteCounselor(${s.id})">REMOVE</button></td>
+                    <td><button class="btn-sm reject staff-del-btn" data-id="${s.id}">REMOVE</button></td>
                 </tr>
             `;
         }).join('');
+
+        // Delegate Staff Deletion
+        container.onclick = (e) => {
+            const delBtn = e.target.closest('.staff-del-btn');
+            if (delBtn) deleteCounselor(delBtn.dataset.id);
+        };
     } catch (e) {
+
         console.error('Counselor render failed', e);
     }
 }
