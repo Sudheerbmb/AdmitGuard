@@ -25,14 +25,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const updatedRules = { ...remoteRules, api_url: RULES.api_url };
         RULES = updatedRules;
         console.log('🛡️ Live Rules Synced from Backend', RULES);
-        
-        // Update any UI elements that depend on these rules
-        const limitDisplay = document.getElementById('excLimit');
-        if (limitDisplay) limitDisplay.textContent = RULES.exception_limit;
       }
     } catch (err) {
       console.warn('🛡️ Backend Sync Failed. Using offline rules.');
     }
+
+    // Init real-time sync
+    initSocket();
   }
 
   document.getElementById('excLimit').textContent = RULES.exception_limit;
@@ -46,6 +45,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadDraft();
   }
 });
+
+function initSocket() {
+  if (!RULES.api_url || RULES.api_url === 'YOUR_DEPLOYED_BACKEND_URL_HERE') return;
+  const socket = io(RULES.api_url);
+  
+  socket.on('connect', () => console.log('🛡️ Popup Socket Connected'));
+
+  socket.on('rules_updated', (newRules) => {
+    console.log('🛡️ Real-time Update: Rules changed');
+    RULES = { ...newRules, api_url: RULES.api_url };
+    
+    // Update UI elements
+    const limitDisplay = document.getElementById('excLimit');
+    if (limitDisplay) limitDisplay.textContent = RULES.exception_limit;
+    
+    // Refresh Keywords/Chips in UI
+    const softFields = ['age', 'grad_year', 'percentage', 'screening_score'];
+    softFields.forEach(field => {
+      const container = document.getElementById(`${field}-chips`);
+      if (container) {
+        container.innerHTML = ''; 
+        RULES.exception_keywords.forEach(kw => {
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.dataset.kw = kw;
+          chip.textContent = kw;
+          container.appendChild(chip);
+        });
+      }
+    });
+
+    updateExceptionCounter();
+    updateFlagIndicator();
+  });
+}
+
 
 function initSoftFields() {
   const softFields = ['age', 'grad_year', 'percentage', 'screening_score'];

@@ -301,7 +301,12 @@ app.put('/api/rules', async (req, res) => {
       await redis.del('admitguard:rules');
     }
 
+
+    // 📣 SOCKET UPDATE: Real-time rules sync
+    io.emit('rules_updated', config);
+
     res.json({ message: 'Rules updated successfully', config });
+
   } catch (err) {
     res.status(500).json({ error: 'Failed to update rules' });
   }

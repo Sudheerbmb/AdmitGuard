@@ -268,7 +268,25 @@
 
     /* SYNC FEEDBACK */
     #syncStatus { font-size: 9px; color: var(--muted); margin-top: 4px; display: block; text-align: center; }
+
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      color: var(--success); text-transform: uppercase; letter-spacing: 1px;
+      background: rgba(0,230,118,0.1); padding: 4px 10px; border-radius: 99px;
+      border: 1px solid rgba(0,230,118,0.3);
+    }
+    .pulse-dot {
+      width: 6px; height: 6px; background: var(--success); border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(0,230,118,0.7); }
+      70% { transform: scale(1.1); opacity: 0.8; box-shadow: 0 0 0 4px rgba(0,230,118,0); }
+      100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(0,230,118,0); }
+    }
   </style>
+
 </head>
 <body>
 
@@ -280,11 +298,16 @@
       <div class="logo-sub">Audit Log</div>
     </div>
   </div>
-  <div class="header-actions">
+  <div class="header-actions" style="align-items: center;">
+    <div class="live-badge" id="liveBadge">
+      <div class="pulse-dot"></div>
+      <span>Live Sync</span>
+    </div>
     <button class="btn success" id="syncBtn">Cloud Sync</button>
     <button class="btn" id="exportBtn">Export CSV</button>
     <button class="btn danger" id="clearBtn">Clear All</button>
   </div>
+
 </header>
 
 <main>
@@ -367,6 +390,9 @@
   </div>
 </div>
 
+
+<script src="socket.io.min.js"></script>
 <script src="audit.js"></script>
+
 </body>
 </html>

@@ -4,16 +4,31 @@
 let allSubmissions = [];
 let piiMaskingEnabled = true;
 let RULES = {};
+let socket = null;
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRules();
-  loadSubmissions();
+  await loadSubmissions(); // Initial load
+
+  // Set up real-time sync via WebSockets
+  initSocket();
+
+  // Instant refresh when user switches back to this tab (fallback)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !socket?.connected) {
+      console.log('🛡️ Tab visible & Socket disconnected: Triggering refresh...');
+      loadSubmissions();
+    }
+  });
+
 
   document.getElementById('searchInput').addEventListener('input', renderTable);
+
   document.getElementById('filterSelect').addEventListener('change', renderTable);
   document.getElementById('exportBtn').addEventListener('click', exportCSV);
   document.getElementById('clearBtn').addEventListener('click', clearAll);
-  document.getElementById('syncBtn').addEventListener('click', simulateSync);
+  document.getElementById('syncBtn').addEventListener('click', manualSync);
   
   const piiToggle = document.getElementById('piiToggle');
   piiToggle.classList.toggle('on', piiMaskingEnabled);
@@ -28,6 +43,55 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+function initSocket() {
+  if (!RULES.api_url || RULES.api_url === 'YOUR_DEPLOYED_BACKEND_URL_HERE') return;
+  
+  socket = io(RULES.api_url);
+
+  socket.on('connect', () => {
+    console.log('🛡️ Socket Connected: Real-time sync ACTIVE');
+    const badge = document.getElementById('liveBadge');
+    if (badge) badge.style.display = 'flex';
+  });
+
+  socket.on('disconnect', () => {
+    console.log('🛡️ Socket Disconnected');
+    const badge = document.getElementById('liveBadge');
+    if (badge) badge.style.display = 'none';
+  });
+
+  socket.on('new_submission', (sub) => {
+    console.log('🛡️ Real-time Update: New submission received');
+    // Normalize fields 
+    const normalizedSub = {
+      id: (sub.candidate_id || sub.id).toString(),
+      timestamp: sub.timestamp,
+      flagged: sub.flagged,
+      exceptions_used: sub.exceptions_used || [],
+      fields: typeof sub.fields === 'string' ? JSON.parse(sub.fields) : sub.fields,
+      rationale: typeof sub.rationale === 'string' ? JSON.parse(sub.rationale) : sub.rationale,
+      decision: sub.decision || 'pending'
+    };
+    
+    // Check if ID already exists to avoid duplicates
+    if (!allSubmissions.some(s => s.id === normalizedSub.id)) {
+      allSubmissions.push(normalizedSub);
+      updateDashboard();
+    }
+  });
+
+  socket.on('decision_updated', (data) => {
+    console.log('🛡️ Real-time Update: Decision updated', data);
+    const sub = allSubmissions.find(s => s.id === data.candidate_id.toString());
+    if (sub) {
+      sub.decision = data.decision;
+      updateDashboard();
+    }
+  });
+}
+
+
+
 async function loadRules() {
   try {
     const res = await fetch(chrome.runtime.getURL('rules.json'));
@@ -36,6 +100,9 @@ async function loadRules() {
 }
 
 async function loadSubmissions() {
+  const syncStatus = document.getElementById('syncStatus');
+  if (syncStatus) syncStatus.textContent = 'Syncing...';
+
   if (RULES.api_url && RULES.api_url !== 'YOUR_DEPLOYED_BACKEND_URL_HERE') {
     try {
       const res = await fetch(`${RULES.api_url}/api/submissions`);
@@ -51,18 +118,26 @@ async function loadSubmissions() {
           decision: row.decision || 'pending'
         }));
         updateDashboard();
+        if (syncStatus) syncStatus.textContent = `Last synced: ${new Date().toLocaleTimeString()}`;
         return;
       }
-    } catch (e) { console.warn('Remote fetch failed.'); }
+    } catch (e) { 
+      console.warn('Remote fetch failed.');
+      if (syncStatus) syncStatus.textContent = 'Sync failed. Using local cache.';
+    }
   }
 
   try {
     chrome.storage.local.get(['admitguard_submissions'], (result) => {
       allSubmissions = (result.admitguard_submissions || []).map(s => ({...s, decision: s.decision || 'pending'}));
       updateDashboard();
+      if (syncStatus && !syncStatus.textContent.includes('Synced')) {
+        syncStatus.textContent = 'Offline Mode';
+      }
     });
   } catch (_) { updateDashboard(); }
 }
+
 
 function updateDashboard() {
   updateStats();
@@ -158,13 +233,17 @@ function showDetail(id) {
   document.getElementById('detailModal').classList.add('show');
 }
 
-async function simulateSync() {
+async function manualSync() {
   const btn = document.getElementById('syncBtn');
+  const originalText = btn.textContent;
   btn.textContent = 'Syncing...';
+  btn.disabled = true;
   await loadSubmissions();
   btn.textContent = 'Sync Complete';
-  setTimeout(() => btn.textContent = 'Cloud Sync', 2000);
+  btn.disabled = false;
+  setTimeout(() => btn.textContent = originalText, 2000);
 }
+
 
 function exportCSV() {
   const headers = ['ID','Name','Email','Status','Decision'];
