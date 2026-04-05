@@ -5,10 +5,16 @@ let allSubmissions = [];
 let piiMaskingEnabled = true;
 let RULES = {};
 let socket = null;
+let TOKEN = null;
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Load Auth Token for secure fetch
+  const authData = await chrome.storage.local.get(['counselor_token']);
+  TOKEN = authData.counselor_token;
+
   await loadRules();
+
   await loadSubmissions(); // Initial load
 
   // Set up real-time sync via WebSockets
@@ -105,9 +111,11 @@ async function loadSubmissions() {
 
   if (RULES.api_url && RULES.api_url !== 'YOUR_DEPLOYED_BACKEND_URL_HERE') {
     try {
-      const res = await fetch(`${RULES.api_url}/api/submissions`);
+      const headers = TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {};
+      const res = await fetch(`${RULES.api_url}/api/submissions`, { headers });
       if (res.ok) {
         const remoteData = await res.json();
+
         allSubmissions = remoteData.map(row => ({
           id: (row.candidate_id || row.id).toString(),
           timestamp: row.timestamp,
