@@ -17,7 +17,6 @@ const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 require('dotenv').config();
 const Groq = require('groq-sdk');
-const { pipeline } = require('@xenova/transformers');
 const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
@@ -230,7 +229,10 @@ app.get('/api/submissions', async (req, res) => {
 // ── VECTOR UTILITIES ────────────────────────────────────────────────────────
 let embedder;
 const getEmbedding = async (text) => {
-  if (!embedder) embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  if (!embedder) {
+    const { pipeline } = await import('@xenova/transformers');
+    embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  }
   const result = await embedder(text, { pooling: 'mean', normalize: true });
   return Array.from(result.data);
 };
