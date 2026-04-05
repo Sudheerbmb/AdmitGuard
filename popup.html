@@ -376,8 +376,15 @@
       font-size: 8px; color: var(--accent); border: 1px solid var(--accent);
       padding: 1px 4px; border-radius: 3px; margin-left: 8px;
     }
-    .logout-btn { background: none; border: none; color: var(--error); cursor: pointer; font-size: 10px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .logout-header-btn {
+      background: none; border: 1px solid var(--error); color: var(--error);
+      padding: 3px 8px; border-radius: 4px; font-size: 9px; cursor: pointer;
+      display: none;
+    }
+    .logout-header-btn:hover { background: var(--error); color: #000; }
   </style>
+
 
 </head>
 <body>
@@ -390,8 +397,12 @@
       <div class="logo-sub"><span id="serverStatus" style="color:var(--muted)">● Checking Connection...</span></div>
     </div>
   </div>
-  <button class="audit-btn" id="openAuditBtn">Audit Log →</button>
+  <div class="header-actions">
+    <button class="logout-header-btn" id="logoutBtn">LOGOUT</button>
+    <button class="audit-btn" id="openAuditBtn">Audit Log →</button>
+  </div>
 </div>
+
 
 
 

@@ -52,7 +52,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('bulkApprove').addEventListener('click', () => bulkAction('approved'));
   document.getElementById('bulkReject').addEventListener('click', () => bulkAction('rejected'));
   document.getElementById('modalClose').addEventListener('click', () => document.getElementById('detailModal').classList.remove('active'));
+  document.getElementById('counselorModalClose').addEventListener('click', () => document.getElementById('counselorModal').classList.remove('active'));
   document.getElementById('createCounselorBtn')?.addEventListener('click', createCounselor);
+  document.getElementById('confirmCreateCounselor')?.addEventListener('click', submitNewCounselor);
+  document.getElementById('genUsername')?.addEventListener('click', generateStaffId);
+  document.getElementById('genPassword')?.addEventListener('click', generatePassword);
+  document.getElementById('copyShareBtn')?.addEventListener('click', copyShareCredentials);
+
+
 
 
 
@@ -520,12 +527,20 @@ async function renderCounselors() {
 }
 
 async function createCounselor() {
-    const name = prompt("Enter Counselor Full Name:");
-    if (!name) return;
-    const username = prompt("Enter Username (Case sensitive):");
-    if (!username) return;
-    const password = prompt("Enter Security Key (Password):");
-    if (!password) return;
+    document.getElementById('counselorModal').classList.add('active');
+    document.getElementById('newCName').value = '';
+    document.getElementById('newCUser').value = '';
+    document.getElementById('newCPass').value = '';
+}
+
+async function submitNewCounselor() {
+    const name = document.getElementById('newCName').value.trim();
+    const username = document.getElementById('newCUser').value.trim();
+    const password = document.getElementById('newCPass').value.trim();
+
+    if (!name || !username || !password) {
+        return alert("All fields are required to activate a staff account.");
+    }
 
     try {
         const res = await fetch(`${RULES.api_url}/api/admin/counselors`, {
@@ -535,14 +550,64 @@ async function createCounselor() {
         });
         if (res.ok) {
             showToast("New Staff Account Activated!");
+            document.getElementById('counselorModal').classList.remove('active');
             renderCounselors();
         } else {
-            alert("Error creating staff account.");
+            const data = await res.json();
+            alert(data.error || "Error activating account.");
         }
     } catch (e) {
         alert("Server Connectivity Error.");
     }
 }
+
+function generateStaffId() {
+    const random = Math.floor(1000 + Math.random() * 9000);
+    const id = `ag_staff_${random}`;
+    document.getElementById('newCUser').value = id;
+    showToast("ID Suggested!");
+}
+
+function generatePassword() {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+    let retVal = "";
+    for (let i = 0, n = charset.length; i < 11; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    document.getElementById('newCPass').value = retVal;
+    document.getElementById('newCPass').type = 'text'; // Show it so they can see
+    showToast("Secure Key Generated!");
+}
+
+function copyShareCredentials() {
+    const name = document.getElementById('newCName').value;
+    const user = document.getElementById('newCUser').value;
+    const pass = document.getElementById('newCPass').value;
+    
+    if (!user || !pass) return showToast("Generate credentials first!");
+
+    const shareText = `
+🛡️ ADMITGUARD STAFF ADMISSION SYSTEM
+--------------------------------------
+Welcome aboard, ${name || 'Counselor'}!
+
+Your official AdmitGuard staff profile has been activated.
+Please use these credentials to log in to the extension.
+
+👤 Staff ID: ${user}
+🔑 Security Key: ${pass}
+🔗 Access Hub: ${window.location.origin}
+
+--------------------------------------
+CONFIDENTIAL: Keep these credentials secure.
+    `.trim();
+
+    navigator.clipboard.writeText(shareText).then(() => {
+        showToast("📋 Credentials Formatted & Copied!");
+    });
+}
+
+
 
 async function deleteCounselor(id) {
     if (!confirm("Are you sure? This will remove the staff profile, but their submission history will remain.")) return;

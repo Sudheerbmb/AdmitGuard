@@ -59,13 +59,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Set up Auth Listeners
   document.getElementById('loginBtn').addEventListener('click', loginStaff);
   document.getElementById('logoutLink')?.addEventListener('click', logoutStaff);
+  document.getElementById('logoutBtn')?.addEventListener('click', logoutStaff);
 });
+
 
 
 async function checkAuth() {
   const data = await chrome.storage.local.get(['counselor_token', 'counselor_user']);
   const staffEl = document.getElementById('staffName');
   const logoutLink = document.getElementById('logoutLink');
+  const logoutBtn = document.getElementById('logoutBtn');
   const loginOverlay = document.getElementById('loginOverlay');
   
   if (data.counselor_token) {
@@ -77,12 +80,15 @@ async function checkAuth() {
       staffEl.style.display = 'inline-block';
     }
     if (logoutLink) logoutLink.style.display = 'block';
+    if (logoutBtn) logoutBtn.style.display = 'block';
   } else {
     if (loginOverlay) loginOverlay.classList.add('show');
     if (staffEl) staffEl.style.display = 'none';
     if (logoutLink) logoutLink.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'none';
   }
 }
+
 
 
 async function loginStaff() {
