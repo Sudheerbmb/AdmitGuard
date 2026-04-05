@@ -31,10 +31,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const updatedRules = { ...remoteRules, api_url: RULES.api_url };
         RULES = updatedRules;
         console.log('🛡️ Live Rules Synced from Backend', RULES);
+        document.getElementById('serverStatus').textContent = '🛡️ SYSTEM ONLINE';
+        document.getElementById('serverStatus').style.color = 'var(--accent)';
       }
     } catch (err) {
       console.warn('🛡️ Backend Sync Failed. Using offline rules.');
+      document.getElementById('serverStatus').textContent = '⚠️ BACKEND OFFLINE';
+      document.getElementById('serverStatus').style.color = 'var(--error)';
     }
+
 
     // Init real-time sync
     initSocket();
@@ -53,24 +58,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Set up Auth Listeners
   document.getElementById('loginBtn').addEventListener('click', loginStaff);
-  document.getElementById('logoutBtn').addEventListener('click', logoutStaff);
+  document.getElementById('logoutLink')?.addEventListener('click', logoutStaff);
 });
+
 
 async function checkAuth() {
   const data = await chrome.storage.local.get(['counselor_token', 'counselor_user']);
   const staffEl = document.getElementById('staffName');
+  const logoutLink = document.getElementById('logoutLink');
+  const loginOverlay = document.getElementById('loginOverlay');
+  
   if (data.counselor_token) {
     TOKEN = data.counselor_token;
     USER = data.counselor_user;
-    document.getElementById('loginOverlay').classList.remove('show');
+    if (loginOverlay) loginOverlay.classList.remove('show');
     if (staffEl) {
       staffEl.textContent = USER.name;
-      staffEl.style.display = 'inline';
+      staffEl.style.display = 'inline-block';
     }
+    if (logoutLink) logoutLink.style.display = 'block';
   } else {
-    document.getElementById('loginOverlay').classList.add('show');
+    if (loginOverlay) loginOverlay.classList.add('show');
+    if (staffEl) staffEl.style.display = 'none';
+    if (logoutLink) logoutLink.style.display = 'none';
   }
 }
+
 
 async function loginStaff() {
   const user = document.getElementById('loginUsername').value;

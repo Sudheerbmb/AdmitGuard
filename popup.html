@@ -386,12 +386,13 @@
   <div class="logo">
     <div class="logo-icon">AG</div>
     <div>
-      <div class="logo-text">ADMITGUARD <span id="staffName" class="staff-badge">OFFLINE</span></div>
-      <div class="logo-sub">Counselor Active • <span id="logoutBtn" class="logout-btn">Logout</span></div>
+      <div class="logo-text">ADMITGUARD <span id="staffName" class="staff-badge" style="display:none">OFFLINE</span></div>
+      <div class="logo-sub"><span id="serverStatus" style="color:var(--muted)">● Checking Connection...</span></div>
     </div>
   </div>
   <button class="audit-btn" id="openAuditBtn">Audit Log →</button>
 </div>
+
 
 
 <div class="form-body" id="formBody">
@@ -547,11 +548,13 @@
 </div>
 
 <div class="footer">
-  <div class="exception-counter">
-    EXCEPTIONS: <span id="excCount">0</span> / <span id="excLimit">2</span>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+     <div class="exception-counter">EXCEPTIONS: <span id="excCount">0</span> / <span id="excLimit">2</span></div>
+     <div id="logoutLink" style="font-size:9px; color:var(--muted); cursor:pointer; text-decoration:underline; display:none">Logout Staff</div>
   </div>
   <button class="submit-btn" id="submitBtn">SUBMIT CANDIDATE</button>
 </div>
+
 
 <!-- SUCCESS OVERLAY -->
 <div class="success-overlay" id="successOverlay">
