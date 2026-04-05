@@ -116,9 +116,11 @@ async function sendWhatsAppAlert(fields, type) {
       body: templates[type],
       to: `whatsapp:${finalPhone}`
     });
-    console.log(`✅ [${type.toUpperCase()}] WhatsApp sent to ${name}`);
+    console.log(`✅ [${type.toUpperCase()}] WhatsApp sent to ${name} (${finalPhone})`);
   } catch (err) {
-    console.error('❌ WhatsApp Notification Error:', err.message);
+    console.error(`❌ WhatsApp Error [${err.code || 'UNKNOWN'}]:`, err.message);
+    if (err.code === 21608) console.error('🛡️ WARNING: You need to send "join <keyword>" to the sandbox number before this works.');
+    if (err.code === 21408) console.error('🛡️ WARNING: Account is unverified or trial limit reached.');
   }
 }
 
