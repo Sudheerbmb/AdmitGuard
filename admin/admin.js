@@ -46,10 +46,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('exportBtn').addEventListener('click', exportFullReport);
   document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
   document.getElementById('piiToggleWrap').addEventListener('click', togglePII);
-  document.getElementById('saveRulesBtn')?.addEventListener('click', () => alert('Configuration Locked. (Backend integration required for persistence)'));
+  document.getElementById('saveRulesBtn')?.addEventListener('click', saveRules);
   document.getElementById('bulkApprove').addEventListener('click', () => bulkAction('approved'));
   document.getElementById('bulkReject').addEventListener('click', () => bulkAction('rejected'));
   document.getElementById('modalClose').addEventListener('click', () => document.getElementById('detailModal').classList.remove('active'));
+
 
   // AI Assistant listeners
   document.getElementById('aiSendBtn')?.addEventListener('click', askAiAssistant);
@@ -284,35 +285,44 @@ async function bulkAction(decision) {
   const originalApproveText = approveBtn.textContent;
   const originalRejectText = rejectBtn.textContent;
 
-  // 1. Immediate Visual Feedback (Snappy UI)
-  approveBtn.disabled = true;
-  rejectBtn.disabled = true;
-  if (decision === 'approved') approveBtn.textContent = 'APPROVING...';
-  else rejectBtn.textContent = 'REJECTING...';
-
-  // 2. Optimistic Step: Clear selection and hide bar immediately
   const processingIds = Array.from(selectedIds);
+
+  // 1. OPTIMISTIC UPDATE: Update local state immediately
+  processingIds.forEach(id => {
+    const sub = allSubmissions.find(s => s.id === id);
+    if (sub) {
+      sub.decision = decision;
+    }
+  });
+
+  // 2. Immediate Visual Feedback
   selectedIds.clear();
   document.getElementById('selectAll').checked = false;
-  updateBulkUI(); // Hide the selection bar right away
+  updateBulkUI();
+  renderDashboard(); // Re-render table with new statuses instantly
 
+  // 3. Process requests in background
   try {
-    // 3. Process requests in parallel
     const promises = processingIds.map(id => patchDecision(id, decision, true));
     await Promise.all(promises);
+    showToast(`Successfully ${decision} ${processingIds.length} candidates.`);
   } catch (e) {
     console.error('Bulk action encountered errors', e);
-  } finally {
-    // 4. Restore UI state and refresh data
-    approveBtn.disabled = false;
-    rejectBtn.disabled = false;
-    approveBtn.textContent = originalApproveText;
-    rejectBtn.textContent = originalRejectText;
-    await loadSubmissions(); // Re-fetch to confirm server state
+    showToast('Notice: Some updates might have failed. Refreshing...', true);
+    await loadSubmissions(); // Revert to source of truth if error
   }
 }
 
+
 async function patchDecision(id, decision, isBulk = false) {
+  // 1. Optimistic Update (Immediate)
+  const sub = allSubmissions.find(s => s.id === id);
+  const oldDecision = sub ? sub.decision : 'pending';
+  if (sub) {
+    sub.decision = decision;
+    if (!isBulk) renderDashboard(); // Redraw instantly
+  }
+
   try {
     const res = await fetch(`${RULES.api_url}/api/submissions/${id}/decision`, {
       method: 'PATCH',
@@ -323,16 +333,24 @@ async function patchDecision(id, decision, isBulk = false) {
       body: JSON.stringify({ decision })
     });
     
-    // Only trigger individual reload if NOT part of a bulk operation
-    if (res.ok && !isBulk) {
-      await loadSubmissions();
+    if (res.ok) {
+        if (!isBulk) showToast(`Candidate #${id.toString().slice(-4)} ${decision.toUpperCase()}`);
+    } else {
+        throw new Error('Sync failed');
     }
     return res.ok;
   } catch (e) { 
     console.error(`Decision sync failed for ID ${id}:`, e);
+    // Rollback on failure
+    if (sub) {
+        sub.decision = oldDecision;
+        renderDashboard();
+    }
+    if (!isBulk) showToast('Sync Failed. Reverting...', true);
     return false;
   }
 }
+
 
 function showDetails(id) {
   const sub = allSubmissions.find(s => s.id === id);
@@ -430,7 +448,7 @@ function renderRuleConfig() {
   if (!container) return;
   
   container.innerHTML = `
-    <div class="rules-container">
+    <div class="rules-view-grid">
       <!-- SOFT RULES -->
       <div class="rule-group">
         <div class="panel-header" style="color:var(--accent)">SOFT RULES (Exceptions Allowed)</div>
@@ -438,31 +456,31 @@ function renderRuleConfig() {
         
         <div class="rule-row">
           <div class="rule-info"><h4>Age Boundaries</h4><p>Allowed age range for candidates.</p></div>
-          <div style="display:flex; gap:8px;">
-            <input type="number" id="rule-age-min" class="rule-input" value="${RULES.age.min}" title="Min">
-            <input type="number" id="rule-age-max" class="rule-input" value="${RULES.age.max}" title="Max">
+          <div style="display:flex; gap:12px;">
+            <div class="rule-input-pod"><label>Min</label><input type="number" id="rule-age-min" class="rule-input" value="${RULES.age.min}"></div>
+            <div class="rule-input-pod"><label>Max</label><input type="number" id="rule-age-max" class="rule-input" value="${RULES.age.max}"></div>
           </div>
         </div>
 
         <div class="rule-row">
           <div class="rule-info"><h4>Graduation Window</h4><p>Earliest and latest graduation years.</p></div>
-          <div style="display:flex; gap:8px;">
-            <input type="number" id="rule-grad-min" class="rule-input" value="${RULES.graduation_year.min}">
-            <input type="number" id="rule-grad-max" class="rule-input" value="${RULES.graduation_year.max}">
+          <div style="display:flex; gap:12px;">
+            <div class="rule-input-pod"><label>Early</label><input type="number" id="rule-grad-min" class="rule-input" value="${RULES.graduation_year.min}"></div>
+            <div class="rule-input-pod"><label>Late</label><input type="number" id="rule-grad-max" class="rule-input" value="${RULES.graduation_year.max}"></div>
           </div>
         </div>
 
         <div class="rule-row">
           <div class="rule-info"><h4>Academia Thresholds</h4><p>Min Percentage and CGPA (10-point scale).</p></div>
-          <div style="display:flex; gap:8px;">
-            <input type="number" id="rule-perc" class="rule-input" value="${RULES.percentage.min}" title="%">
-            <input type="number" id="rule-cgpa" class="rule-input" value="${RULES.cgpa.min}" title="CGPA">
+          <div style="display:flex; gap:12px;">
+            <div class="rule-input-pod"><label>%</label><input type="number" id="rule-perc" class="rule-input" value="${RULES.percentage.min}"></div>
+            <div class="rule-input-pod"><label>CGPA</label><input type="number" id="rule-cgpa" class="rule-input" value="${RULES.cgpa.min}"></div>
           </div>
         </div>
 
         <div class="rule-row">
           <div class="rule-info"><h4>Screening Score</h4><p>Minimum required to pass initial test.</p></div>
-          <input type="number" id="rule-score-min" class="rule-input" value="${RULES.screening_score.min}">
+          <div class="rule-input-pod"><label>Score</label><input type="number" id="rule-score-min" class="rule-input" value="${RULES.screening_score.min}"></div>
         </div>
       </div>
 
@@ -473,20 +491,19 @@ function renderRuleConfig() {
         
         <div class="rule-row">
           <div class="rule-info"><h4>Aadhaar Verhoeff Check</h4><p>Use mathematical checksum to spot fake numbers.</p></div>
-          <select id="rule-aadhaar-sum" class="rule-input">
-            <option value="true" ${RULES.aadhaar_checksum ? 'selected' : ''}>ENABLED</option>
-            <option value="false" ${!RULES.aadhaar_checksum ? 'selected' : ''}>DISABLED</option>
-          </select>
+          <div class="rule-input-pod">
+            <select id="rule-aadhaar-sum" class="rule-input" style="width:120px; transition: 0s;">
+                <option value="true" ${RULES.aadhaar_checksum ? 'selected' : ''}>ENABLED</option>
+                <option value="false" ${!RULES.aadhaar_checksum ? 'selected' : ''}>DISABLED</option>
+            </select>
+          </div>
         </div>
 
         <div class="rule-row">
           <div class="rule-info"><h4>Email Whitelist</h4><p>Comma-separated allowed domains (e.g. google.com)</p></div>
-          <input type="text" id="rule-email-white" class="rule-input" style="width:200px;" value="${(RULES.email_whitelist || []).join(', ')}">
-        </div>
-
-        <div class="rule-row">
-          <div class="rule-info"><h4>Block Interview Rejects</h4><p>Prevent submissions for 'Rejected' candidates.</p></div>
-          <span style="font-size:10px; color:var(--success); font-weight:bold;">ALWAYS FORCED</span>
+          <div class="rule-input-pod">
+            <input type="text" id="rule-email-white" class="rule-input" value="${(RULES.email_whitelist || []).join(', ')}">
+          </div>
         </div>
       </div>
 
@@ -496,22 +513,27 @@ function renderRuleConfig() {
         
         <div class="rule-row">
           <div class="rule-info"><h4>Exception Flagging Limit</h4><p>How many exceptions before candidate is FLAGGED.</p></div>
-          <input type="number" id="rule-limit" class="rule-input" value="${RULES.exception_limit}">
+          <div class="rule-input-pod">
+            <label>LIMIT</label>
+            <input type="number" id="rule-limit" class="rule-input" value="${RULES.exception_limit}">
+          </div>
         </div>
 
         <div class="rule-row">
-          <div class="rule-info"><h4>Rationale Requirement</h4><p>Min characters and list of mandatory keywords.</p></div>
-          <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-            <input type="number" id="rule-len" class="rule-input" value="${RULES.rationale_min_length}" placeholder="Min length">
-            <input type="text" id="rule-keywords" class="rule-input" style="width:250px;" value="${(RULES.exception_keywords || []).join(', ')}" placeholder="Keywords (comma separated)">
+          <div class="rule-info"><h4>Rationale Requirement</h4><p>Min characters and list of keywords.</p></div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="rule-input-pod"><label>MIN CHARS</label><input type="number" id="rule-len" class="rule-input" value="${RULES.rationale_min_length}"></div>
+            <div class="rule-input-pod"><label>KEYWORDS</label><input type="text" id="rule-keywords" class="rule-input" value="${(RULES.exception_keywords || []).join(', ')}"></div>
           </div>
         </div>
       </div>
     </div>
   `;
 
+  document.getElementById('saveRulesBtn').className = 'btn-premium';
   document.getElementById('saveRulesBtn').onclick = saveRules;
 }
+
 
 async function saveRules() {
   const btn = document.getElementById('saveRulesBtn');
@@ -701,18 +723,33 @@ function initSocket() {
 
   socket.on('new_submission', (sub) => {
     console.log('📩 New Submission Received:', sub);
-    // Show a toast or notification? 
-    // For now, just refresh the data
-    loadSubmissions();
-    
-    // Add a mini toast if possible? 
-    showToast(`New Candidate: ${sub.fields.name || 'Anonymous'}`);
+    const normalizedSub = {
+      id: sub.candidate_id || sub.id,
+      timestamp: sub.timestamp,
+      flagged: sub.flagged,
+      exceptions_used: sub.exceptions_used || [],
+      fields: typeof sub.fields === 'string' ? JSON.parse(sub.fields) : sub.fields,
+      rationale: typeof sub.rationale === 'string' ? JSON.parse(sub.rationale) : sub.rationale,
+      decision: sub.decision || 'pending'
+    };
+    if (!allSubmissions.some(s => s.id === normalizedSub.id)) {
+      allSubmissions.unshift(normalizedSub);
+      renderDashboard(); // Instant render
+      showToast(`New Candidate: ${normalizedSub.fields.name || 'Anonymous'}`);
+    }
   });
 
   socket.on('decision_updated', (data) => {
     console.log('⚖️ Candidate Status Updated:', data);
-    loadSubmissions();
+    const sub = allSubmissions.find(s => s.id === data.candidate_id || s.id === parseInt(data.candidate_id));
+    if (sub) {
+      sub.decision = data.decision;
+      renderDashboard(); 
+    } else {
+      loadSubmissions(); // Fallback if not in local memory
+    }
   });
+
 
   socket.on('disconnect', () => {
     console.warn('🛡️ WebSockets: DISCONNECTED');
