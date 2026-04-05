@@ -23,6 +23,10 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 
 const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http, {
+  cors: { origin: "*", methods: ["GET", "POST", "PATCH"] }
+});
 const port = process.env.PORT || 3000;
 const client = new OAuth2Client("436650604205-ifoim7stupnfpp80u5ha2u2f6nouts5v.apps.googleusercontent.com");
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -347,6 +351,9 @@ app.post('/api/submissions', async (req, res) => {
     sendWhatsAppAlert(fields, 'received');
     sendEmailNotification(sub, 'received');
 
+    // 📣 SOCKET UPDATE: Real-time dashboard notification
+    io.emit('new_submission', sub);
+
     res.status(201).json(sub);
   } catch (err) {
     console.error('Save Error', err);
@@ -373,6 +380,9 @@ app.patch('/api/submissions/:candidate_id/decision', async (req, res) => {
     if (decision === 'approved' || decision === 'rejected') {
       sendWhatsAppAlert(fields, decision);
       if (decision === 'approved') sendEmailNotification(sub, 'approved');
+      
+      // 📣 SOCKET UPDATE: Real-time decision sync
+      io.emit('decision_updated', { candidate_id, decision });
     }
 
     res.json(sub);
@@ -482,4 +492,4 @@ app.post('/api/analyze', async (req, res) => {
 
 Sentry.setupExpressErrorHandler(app);
 
-app.listen(port, () => console.log(`🛡️ Port ${port}`));
+http.listen(port, () => console.log(`🛡️ Port ${port} (WebSockets ENABLED)`));

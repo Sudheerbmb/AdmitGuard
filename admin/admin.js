@@ -13,6 +13,7 @@ function getAuthHeader() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRules();
+  initSocket(); // Initialize real-time updates
   await loadSubmissions();
 
   // Navigation Logic
@@ -681,4 +682,63 @@ function formatAiResponse(text) {
   });
 
   return formatted;
+}
+
+/** 📡 REAL-TIME SOCKETS **/
+function initSocket() {
+  if (!io || !RULES.api_url) return;
+
+  const socket = io(RULES.api_url);
+
+  socket.on('connect', () => {
+    console.log('🛡️ WebSockets: CONNECTED to Backend');
+    const status = document.getElementById('backendStatus');
+    if (status) {
+      status.textContent = 'LIVE (Real-time)';
+      status.style.color = 'var(--accent)';
+    }
+  });
+
+  socket.on('new_submission', (sub) => {
+    console.log('📩 New Submission Received:', sub);
+    // Show a toast or notification? 
+    // For now, just refresh the data
+    loadSubmissions();
+    
+    // Add a mini toast if possible? 
+    showToast(`New Candidate: ${sub.fields.name || 'Anonymous'}`);
+  });
+
+  socket.on('decision_updated', (data) => {
+    console.log('⚖️ Candidate Status Updated:', data);
+    loadSubmissions();
+  });
+
+  socket.on('disconnect', () => {
+    console.warn('🛡️ WebSockets: DISCONNECTED');
+    const status = document.getElementById('backendStatus');
+    if (status) {
+      status.textContent = 'CONNECTED (Polling Fallback)';
+      status.style.color = 'var(--muted)';
+    }
+  });
+}
+
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--surface2); color: var(--accent);
+    padding: 12px 24px; border-radius: 12px;
+    border: 1px solid var(--accent);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 9999; animation: slideUp 0.3s ease-out;
+  `;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = '0.5s';
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
 }
