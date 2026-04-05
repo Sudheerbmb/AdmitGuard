@@ -21,6 +21,11 @@ const { OAuth2Client } = require('google-auth-library');
 const { Resend } = require('resend');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'admit-guard-omega-secure-key';
+
 
 const app = express();
 const http = require('http').createServer(app);
@@ -57,6 +62,13 @@ const pool = new Pool({
 // INITIALIZE DB
 const initDb = async () => {
   const queryText = `
+    CREATE TABLE IF NOT EXISTS counselors (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS submissions (
       id SERIAL PRIMARY KEY,
       candidate_id BIGINT UNIQUE NOT NULL,
@@ -65,21 +77,31 @@ const initDb = async () => {
       exceptions_used TEXT[],
       fields JSONB NOT NULL,
       rationale JSONB,
-      decision TEXT DEFAULT 'pending'
+      decision TEXT DEFAULT 'pending',
+      counselor_id INTEGER REFERENCES counselors(id)
     );
     CREATE TABLE IF NOT EXISTS rules (
       id INT PRIMARY KEY,
       config JSONB NOT NULL,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+
   `;
   try {
     await pool.query(queryText);
+    await pool.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS counselor_id INTEGER REFERENCES counselors(id)`);
     await pool.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS decision TEXT DEFAULT 'pending'`);
     await pool.query(`CREATE EXTENSION IF NOT EXISTS vector`);
     await pool.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS rationale_vector vector(384)`);
     
-    // Seed default rules if empty
+    // Seed default counselor (admin/admin) if empty
+    const cRes = await pool.query('SELECT count(*) FROM counselors');
+    if (cRes.rows[0].count == 0) {
+        const hashed = await bcrypt.hash('admin123', 10);
+        await pool.query('INSERT INTO counselors(name, username, password) VALUES($1, $2, $3)', ['Default Staff', 'admin', hashed]);
+        console.log('🛡️ Default counselor created (admin/admin123)');
+    }
+
     const res = await pool.query('SELECT count(*) FROM rules');
     if (res.rows[0].count == 0) {
       const defaultRules = {
@@ -249,22 +271,129 @@ async function verifyGoogleToken(req, res, next) {
   }
 }
 
+// ── NEW: COUNSELOR AUTH MIDDLEWARE ───────────────────────────────────────────
+const verifyCounselorJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Counsellor Auth Required' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.counselor = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Session Expired: Please Login again' });
+  }
+};
+
+
 // ── ENDPOINTS ─────────────────────────────────────────────────────────────────
 // Apply global protection to all /api/ endpoints EXCEPT submissions (Public Intake)
 app.use('/api', (req, res, next) => {
-  // 1. Allow the extension to submit data publicly
-  if (req.path === '/submissions' && req.method === 'POST') return next();
+  // 1. Allow the extension to LOGIN first
+  if (req.path === '/auth/login' && req.method === 'POST') return next();
   
   // 2. Allow reading rules publicly so the extension can sync validation logic
   if (req.path === '/rules' && req.method === 'GET') return next();
 
-  // 3. Allow reading submissions (for extension Audit page). 
-  // Note: In a production environment, this should be protected by a simpler API key or Auth.
-  if (req.path === '/submissions' && req.method === 'GET') return next();
+  // 3. For extension submission, use Counselor JWT
+  if (req.path === '/submissions' && req.method === 'POST') {
+    return verifyCounselorJWT(req, res, next);
+  }
 
-  // Protected routes (PUT rules, PATCH decisions, DELETE, AI Analyze)
+  // 4. For extension audit log, allow Counselor JWT or Google Admin
+  if (req.path === '/submissions' && req.method === 'GET') {
+    // If it has a Bearer token but it's JWT, it might be counselor
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            req.counselor = decoded;
+            return next();
+        } catch(e) { /* fallthrough to google auth if JWT fails */ }
+    }
+    // Otherwise fallback to Google Admin auth
+  }
+
+  // Protected routes (Admin specific)
   return verifyGoogleToken(req, res, next);
 });
+
+// ── COUNSELOR AUTH & MANAGEMENT ──────────────────────────────────────────────
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const { rows } = await pool.query('SELECT * FROM counselors WHERE username = $1', [username]);
+    if (rows.length === 0) return res.status(401).json({ error: 'Invalid Staff Credentials' });
+    
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: 'Invalid Staff Credentials' });
+    
+    const token = jwt.sign({ id: user.id, username: user.username, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, name: user.name, username: user.username } });
+  } catch (err) {
+    res.status(500).json({ error: 'Auth sub-system error' });
+  }
+});
+
+app.get('/api/admin/counselors', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id, name, username, created_at FROM counselors ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch staff list' });
+  }
+});
+
+app.post('/api/admin/counselors', async (req, res) => {
+  const { name, username, password } = req.body;
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const { rows } = await pool.query(
+      'INSERT INTO counselors(name, username, password) VALUES($1, $2, $3) RETURNING id, name, username',
+      [name, username, hashed]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Staff account creation failed' });
+  }
+});
+
+app.delete('/api/admin/counselors/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM counselors WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Staff removed' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to remove staff' });
+  }
+});
+
+app.get('/api/admin/stats/counselors', async (req, res) => {
+  const { range } = req.query; // optional: last 7 days, 30 days
+  try {
+    const query = `
+      SELECT 
+        c.id, 
+        c.name, 
+        COUNT(s.id) as total_submissions,
+        COUNT(CASE WHEN s.decision = 'approved' THEN 1 END) as approved_count,
+        COUNT(CASE WHEN s.decision = 'rejected' THEN 1 END) as rejected_count,
+        COUNT(CASE WHEN s.flagged = TRUE THEN 1 END) as flagged_count
+      FROM counselors c
+      LEFT JOIN submissions s ON c.id = s.counselor_id
+      GROUP BY c.id, c.name
+      ORDER BY total_submissions DESC
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Analytics failure' });
+  }
+});
+
 
 app.get('/api/rules', async (req, res) => {
   try {
@@ -314,12 +443,18 @@ app.put('/api/rules', async (req, res) => {
 
 app.get('/api/submissions', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM submissions ORDER BY timestamp DESC');
+    const result = await pool.query(`
+        SELECT s.*, c.name as counselor_name 
+        FROM submissions s 
+        LEFT JOIN counselors c ON s.counselor_id = c.id 
+        ORDER BY s.timestamp DESC
+    `);
     res.json(result.rows || []);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch' });
   }
 });
+
 
 // ── VECTOR UTILITIES ────────────────────────────────────────────────────────
 let embedder;
@@ -343,11 +478,13 @@ app.post('/api/submissions', async (req, res) => {
   }
 
   const queryText = `
-    INSERT INTO submissions(candidate_id, timestamp, flagged, exceptions_used, fields, rationale, decision, rationale_vector)
-    VALUES($1, $2, $3, $4, $5, $6, 'pending', $7)
+    INSERT INTO submissions(candidate_id, timestamp, flagged, exceptions_used, fields, rationale, decision, rationale_vector, counselor_id)
+    VALUES($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
     RETURNING *;
   `;
-  const values = [id, timestamp, flagged, exceptions_used, JSON.stringify(fields), JSON.stringify(rationale), vector ? `[${vector.join(',')}]` : null];
+  const counselor_id = req.counselor?.id || null;
+  const values = [id, timestamp, flagged, exceptions_used, JSON.stringify(fields), JSON.stringify(rationale), vector ? `[${vector.join(',')}]` : null, counselor_id];
+
   try {
     const result = await pool.query(queryText, values);
     const sub = result.rows[0];

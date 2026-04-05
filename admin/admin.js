@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (view === 'pipeline') renderPipeline();
       if (view === 'audit') renderDetailedLogs();
       if (view === 'rules') renderRuleConfig();
+      if (view === 'counselors') renderCounselors();
+
     });
   });
 
@@ -50,6 +52,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('bulkApprove').addEventListener('click', () => bulkAction('approved'));
   document.getElementById('bulkReject').addEventListener('click', () => bulkAction('rejected'));
   document.getElementById('modalClose').addEventListener('click', () => document.getElementById('detailModal').classList.remove('active'));
+  document.getElementById('createCounselorBtn')?.addEventListener('click', createCounselor);
+
 
 
   // AI Assistant listeners
@@ -206,6 +210,7 @@ function renderTable() {
           <div>${sanitize(maskedName)}</div>
           <div class="candidate-id">${sanitize(maskedEmail)}</div>
         </td>
+        <td><span style="font-size:11px; color:var(--accent);">${sanitize(sub.counselor_name || 'System')}</span></td>
         <td><span class="badge ${statusClass}">${statusText}</span></td>
         <td>${sub.exceptions_used.length} Rules</td>
         <td style="max-width: 200px">
@@ -218,6 +223,7 @@ function renderTable() {
         </td>
       </tr>
     `;
+
   }).join('');
 
   // Handle checkboxes
@@ -443,7 +449,94 @@ function renderDetailedLogs() {
   `).join('');
 }
 
+async function renderCounselors() {
+    const container = document.getElementById('staffBody');
+    if (!container) return;
+
+    try {
+        const statsRes = await fetch(`${RULES.api_url}/api/admin/stats/counselors`, { headers: getAuthHeader() });
+        const stats = await statsRes.json();
+
+        // Update Counselor Stats Cards
+        if (stats.length > 0) {
+            const top = stats[0];
+            document.getElementById('topCounselor').textContent = top.name;
+            
+            let totalApp = 0, totalSub = 0;
+            stats.forEach(s => {
+                totalApp += parseInt(s.approved_count);
+                totalSub += parseInt(s.total_submissions);
+            });
+            const avg = totalSub > 0 ? Math.round((totalApp / totalSub) * 100) : 0;
+            document.getElementById('avgQuality').textContent = `${avg}%`;
+
+            const flashiest = [...stats].sort((a,b) => b.flagged_count - a.flagged_count)[0];
+            document.getElementById('flagCounselor').textContent = flashiest.name;
+        }
+
+        container.innerHTML = stats.map(s => {
+            const appRate = s.total_submissions > 0 ? Math.round((s.approved_count / s.total_submissions) * 100) : 0;
+            return `
+                <tr>
+                    <td style="font-weight:600;">${sanitize(s.name)}</td>
+                    <td style="font-family:monospace; color:var(--muted)">@${sanitize(s.username)}</td>
+                    <td>${s.total_submissions}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="risk-track" style="width:60px;"><div class="risk-fill" style="width:${appRate}%; background:var(--success)"></div></div>
+                            <span style="font-size:10px;">${appRate}%</span>
+                        </div>
+                    </td>
+                    <td><button class="btn-sm reject" onclick="deleteCounselor(${s.id})">REMOVE</button></td>
+                </tr>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Counselor render failed', e);
+    }
+}
+
+async function createCounselor() {
+    const name = prompt("Enter Counselor Full Name:");
+    if (!name) return;
+    const username = prompt("Enter Username (Case sensitive):");
+    if (!username) return;
+    const password = prompt("Enter Security Key (Password):");
+    if (!password) return;
+
+    try {
+        const res = await fetch(`${RULES.api_url}/api/admin/counselors`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+            body: JSON.stringify({ name, username, password })
+        });
+        if (res.ok) {
+            showToast("New Staff Account Activated!");
+            renderCounselors();
+        } else {
+            alert("Error creating staff account.");
+        }
+    } catch (e) {
+        alert("Server Connectivity Error.");
+    }
+}
+
+async function deleteCounselor(id) {
+    if (!confirm("Are you sure? This will remove the staff profile, but their submission history will remain.")) return;
+    try {
+        const res = await fetch(`${RULES.api_url}/api/admin/counselors/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeader()
+        });
+        if (res.ok) {
+            showToast("Staff profile removed.");
+            renderCounselors();
+        }
+    } catch (e) { alert("Failed to remove staff."); }
+}
+
 function renderRuleConfig() {
+
   const container = document.getElementById('rulesConfigContent');
   if (!container) return;
   

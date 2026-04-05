@@ -356,7 +356,29 @@
     .new-entry-btn:hover { background: rgba(0,229,255,0.1); }
 
     #offer-field { display: none; }
+
+    /* LOGIN OVERLAY */
+    .login-overlay {
+      position: absolute; inset: 0; background: var(--bg);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px; z-index: 1000;
+    }
+    .login-overlay.show { display: flex; }
+    .login-card { width: 100%; }
+    .login-logo { margin-bottom: 30px; text-align: center; }
+    .login-btn {
+      width: 100%; background: var(--accent); color: #000;
+      border: none; border-radius: 6px; padding: 12px;
+      font-family: 'Space Mono', monospace; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer; margin-top: 20px;
+    }
+    .staff-badge {
+      font-size: 8px; color: var(--accent); border: 1px solid var(--accent);
+      padding: 1px 4px; border-radius: 3px; margin-left: 8px;
+    }
+    .logout-btn { background: none; border: none; color: var(--error); cursor: pointer; font-size: 10px; }
   </style>
+
 </head>
 <body>
 
@@ -364,12 +386,13 @@
   <div class="logo">
     <div class="logo-icon">AG</div>
     <div>
-      <div class="logo-text">ADMITGUARD</div>
-      <div class="logo-sub">Compliance System</div>
+      <div class="logo-text">ADMITGUARD <span id="staffName" class="staff-badge">OFFLINE</span></div>
+      <div class="logo-sub">Counselor Active • <span id="logoutBtn" class="logout-btn">Logout</span></div>
     </div>
   </div>
   <button class="audit-btn" id="openAuditBtn">Audit Log →</button>
 </div>
+
 
 <div class="form-body" id="formBody">
 
@@ -541,6 +564,27 @@
   </div>
   <button class="new-entry-btn" id="newEntryBtn">+ NEW ENTRY</button>
 </div>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon" style="margin: 0 auto 10px;">AG</div>
+      <div class="logo-text">STAFF LOGIN</div>
+    </div>
+    <div class="field">
+      <label>ID / Username</label>
+      <input type="text" id="loginUsername" placeholder="Enter Staff ID">
+    </div>
+    <div class="field">
+      <label>Security Key / Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+    </div>
+    <div id="loginError" class="err-msg" style="margin-bottom: 10px;"></div>
+    <button class="login-btn" id="loginBtn">AUTHENTICATE</button>
+  </div>
+</div>
+
 
 
 <script src="socket.io.min.js"></script>

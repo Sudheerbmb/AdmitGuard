@@ -2,8 +2,11 @@
 // Enhanced with Verhoeff validation, debounced auto-save, and modular logic
 
 let RULES = {};
+let TOKEN = null;
+let USER = null;
 const exceptionStates = {}; // { fieldId: { active: bool, rationaleValid: bool } }
 let autoSaveTimer = null;
+
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,7 +18,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Local rules load failed');
   }
 
-  // 2. Try to sync with Live Backend
+  // 2. Auth Check (Must happen before remote sync to get correct token)
+  await checkAuth();
+
+  // 3. Try to sync with Live Backend
   if (RULES.api_url) {
     try {
       const remoteRes = await fetch(`${RULES.api_url}/api/rules`);
@@ -44,9 +50,77 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (RULES.auto_save_draft) {
     loadDraft();
   }
+
+  // Set up Auth Listeners
+  document.getElementById('loginBtn').addEventListener('click', loginStaff);
+  document.getElementById('logoutBtn').addEventListener('click', logoutStaff);
 });
 
+async function checkAuth() {
+  const data = await chrome.storage.local.get(['counselor_token', 'counselor_user']);
+  const staffEl = document.getElementById('staffName');
+  if (data.counselor_token) {
+    TOKEN = data.counselor_token;
+    USER = data.counselor_user;
+    document.getElementById('loginOverlay').classList.remove('show');
+    if (staffEl) {
+      staffEl.textContent = USER.name;
+      staffEl.style.display = 'inline';
+    }
+  } else {
+    document.getElementById('loginOverlay').classList.add('show');
+  }
+}
+
+async function loginStaff() {
+  const user = document.getElementById('loginUsername').value;
+  const pass = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  
+  if (!user || !pass) {
+    errEl.textContent = 'Please enter credentials';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.textContent = 'AUTHENTICATING...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${RULES.api_url}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        TOKEN = data.token;
+        USER = data.user;
+        await chrome.storage.local.set({ counselor_token: TOKEN, counselor_user: USER });
+        document.getElementById('loginOverlay').classList.remove('show');
+    } else {
+        errEl.textContent = data.error || 'Login failed';
+        errEl.classList.add('show');
+    }
+  } catch (e) {
+    errEl.textContent = 'Backend Connection Error';
+    errEl.classList.add('show');
+  } finally {
+    btn.textContent = 'AUTHENTICATE';
+    btn.disabled = false;
+    checkAuth();
+  }
+}
+
+async function logoutStaff() {
+  if (!confirm('Logout of AdmitGuard?')) return;
+  await chrome.storage.local.remove(['counselor_token', 'counselor_user']);
+  location.reload();
+}
+
 function initSocket() {
+
   if (!RULES.api_url || RULES.api_url === 'YOUR_DEPLOYED_BACKEND_URL_HERE') return;
   const socket = io(RULES.api_url);
   
@@ -562,15 +636,19 @@ function saveSubmission(sub) {
   } catch (_) {}
 
   // NEW: Push to Remote Backend if URL is set
-  if (RULES.api_url && RULES.api_url !== 'YOUR_DEPLOYED_BACKEND_URL_HERE') {
+  if (RULES.api_url && RULES.api_url !== 'YOUR_DEPLOYED_BACKEND_URL_HERE' && TOKEN) {
     fetch(`${RULES.api_url}/api/submissions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`
+      },
       body: JSON.stringify(sub)
     })
     .then(r => console.log('Remote Sync: Success'))
     .catch(e => console.error('Remote Sync Error:', e));
   }
+
 }
 
 // ── SUCCESS ───────────────────────────────────────────────────────────────────

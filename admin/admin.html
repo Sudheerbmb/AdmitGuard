@@ -26,7 +26,11 @@
     <div class="nav-item" data-view="audit">
       <span class="icon">📜</span> Detailed Logs
     </div>
+    <div class="nav-item" data-view="counselors">
+      <span class="icon">👥</span> Counselor Management
+    </div>
     <div class="divider"></div>
+
     <div class="nav-item" data-view="rules">
       <span class="icon">⚙️</span> Rule Config
     </div>
@@ -140,7 +144,9 @@
             <tr>
               <th><input type="checkbox" id="selectAll"></th>
               <th>Candidate</th>
+              <th>Counsellor</th>
               <th>Compliance</th>
+
               <th>Auto-Flag</th>
               <th>Exception Details</th>
               <th>Manager Decision</th>
@@ -203,8 +209,49 @@
     </div>
   </section>
 
+  <!-- COUNSELOR MANAGEMENT -->
+  <section id="counselorsView" class="view">
+    <div class="panel data-panel">
+        <div class="panel-header flex-header">
+            <span>Active Staff & Performance</span>
+            <button class="btn success btn-sm" id="createCounselorBtn">+ ADD NEW STAFF</button>
+        </div>
+        
+        <div class="stats-grid" id="counselorStatsGrid" style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div class="stat-card">
+              <div class="label">Top Recruiter</div>
+              <div class="val" id="topCounselor">-</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Avg Approval Rate</div>
+              <div class="val" id="avgQuality">-%</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Primary Flag User</div>
+              <div class="val" id="flagCounselor">-</div>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table id="counselorsTable">
+                <thead>
+                    <tr>
+                        <th>Counsellor Name</th>
+                        <th>User ID</th>
+                        <th>Submissions</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="staffBody"></tbody>
+            </table>
+        </div>
+    </div>
+  </section>
+
   <!-- RULE CONFIG -->
   <section id="rulesView" class="view">
+
     <div class="rules-container">
       <div class="panel-header">System Eligibility Rules</div>
       <div id="rulesConfigContent">
