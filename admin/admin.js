@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadRules() {
-  const fallbackUrl = 'https://admitguard.onrender.com';
+  const fallbackUrl = 'https://admitguardd.onrender.com';
   try {
     // Try to get rules from backend first
     const res = await fetch(`${fallbackUrl}/api/rules`, { headers: getAuthHeader() });
