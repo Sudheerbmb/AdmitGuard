@@ -1,304 +1,130 @@
-# AdmitGuard 🛡️
-### An AI-Powered Distributed Governance Framework for High-Integrity Admissions
-
-> **AdmitGuard** is a full-stack admission management system built around a **Chrome Browser Extension** (edge engine) + **Node.js/Express backend** + **admin web dashboard**. It enforces institutional admission rules in real-time, stores submissions in a vectorized PostgreSQL database, and gives managers an AI-augmented command center with live WebSocket updates.
-
----
+# AdmitGuard: An AI-Powered Distributed Governance Framework for High-Integrity Admissions
 
 ## 📄 Abstract
-
 AdmitGuard introduces a novel, distributed approach to admissions governance, leveraging a combination of **edge-validation algorithms**, **multi-stage AI reasoning**, and **latent semantic search**. By distributing rule enforcement to the point of data entry (Chrome Extension) and centralizing decision-making through an AI-augmented dashboard, the framework mitigates data entry errors, prevents identity spoofing, and provides management with deep, context-aware insights into admissions trends.
 
 ---
 
-## 🚀 Technology Stack
+## 1. Technical Infrastructure & Component Matrix
 
-![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/javascript-%23F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=black)
-![Chrome](https://img.shields.io/badge/chrome%20extension-%234285F4.svg?style=for-the-badge&logo=google-chrome&logoColor=white)
-![Nodejs](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
-![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-![Vector](https://img.shields.io/badge/pgvector-%23336791.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+### 🚀 Core Technologies Leveraged
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) 
+![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) 
+![JavaScript](https://img.shields.io/badge/javascript-%23F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=black) 
+![Chrome](https://img.shields.io/badge/chrome%20extension-%234285F4.svg?style=for-the-badge&logo=google-chrome&logoColor=white) 
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white) 
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white)
+![Sentry](https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white) 
+![Vector](https://img.shields.io/badge/pgvector-%23336791.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq%20AI-%23f26522.svg?style=for-the-badge&logo=ai&logoColor=white)
 ![Llama 3](https://img.shields.io/badge/Llama--3.3--70B-blue?style=for-the-badge&logo=meta&logoColor=white)
-![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
 ![Auth](https://img.shields.io/badge/Google--OAuth--2.0-4285F4?style=for-the-badge&logo=google&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
-![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white)
-![Resend](https://img.shields.io/badge/Resend-000000?style=for-the-badge&logo=mail.ru&logoColor=white)
-![PDFKit](https://img.shields.io/badge/PDFKit-red?style=for-the-badge)
-![Sentry](https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+![Nodejs](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white) 
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
----
-
-## 🗂️ Repository Structure
-
-```
-AdmitGuard/
-├── manifest.json          # Chrome Extension MV3 manifest
-├── popup.html             # Extension main UI (admission form)
-├── popup.js               # Extension logic: validation, auth, socket, submission
-├── audit.html             # Extension audit log viewer page
-├── audit.js               # Audit log logic
-├── rules.json             # Local fallback rules + API URL config
-├── socket.io.min.js       # Bundled Socket.io client for the extension
-├── icons/                 # Extension icons
-├── prompts/               # AI development prompts (sprint-by-sprint)
-├── sprint-log.md          # Development sprint log
-├── admin/
-│   ├── index.html         # Admin login page (Google OAuth)
-│   ├── admin.html         # Admin dashboard UI
-│   ├── admin.js           # Dashboard logic: pipeline, AI assistant, real-time sync
-│   ├── admin.css          # Dashboard styles
-│   └── auth.js            # Google OAuth token handler
-└── admitguard-backend/
-    ├── server.js          # Express API + Socket.io + AI + PDF engine
-    ├── package.json       # Node dependencies
-    └── Dockerfile         # Docker container config (deployed on Render)
-```
+| Module | Technology | Functional Role |
+| :--- | :--- | :--- |
+| **Edge Engine** | ![JS](https://img.shields.io/badge/JS-F7DF1E?logo=javascript&logoColor=black) ![Chrome](https://img.shields.io/badge/Chrome-4285F4?logo=googlechrome&logoColor=white) | Real-time governance & local draft persistence |
+| **Command Center** | ![Auth](https://img.shields.io/badge/Google-4285F4?logo=google&logoColor=white) ![HTML](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) | Secured Admin dashboard with JWT session state |
+| **Backend Core** | ![Node](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white) | Identity Verification (OIDC) & API Orchestration |
+| **Persistence** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-336791) | Transactional storage & high-dim vector similarity |
+| **Automation** | ![Twilio](https://img.shields.io/badge/Twilio-F22F46?logo=twilio&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white) | Real-time notifications & low-latency rule caching |
+| **Observability** | ![Sentry](https://img.shields.io/badge/Sentry-362D59?logo=sentry&logoColor=white) | Enterprise-grade error tracking & performance metrics |
+| **Inference Layer** | ![Groq](https://img.shields.io/badge/Groq-f26522) ![Llama](https://img.shields.io/badge/Llama3-0668E1) | Natural Language Reasoning & SQL Planning |
 
 ---
 
-## ⚙️ System Architecture
-
-AdmitGuard is a **three-tier distributed system**:
-
-```
-┌─────────────────────┐       WebSocket (Socket.io)        ┌─────────────────────┐
-│   Chrome Extension  │ ◄──────────────────────────────── │  Admin Dashboard    │
-│   (Edge Engine)     │                                     │  (Command Center)   │
-│   popup.html/.js    │ ──── POST /api/submissions ───────► │  admin.html/.js     │
-│   Counselor Login   │ ◄─── GET  /api/rules         ────  │  Google OAuth       │
-└─────────────────────┘                                     └─────────────────────┘
-           │                                                           │
-           │              REST API + WebSockets                        │
-           ▼                                                           ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                     Node.js / Express Backend (Render)                          │
-│  ┌──────────────┐  ┌────────────┐  ┌─────────────┐  ┌──────────────────────┐  │
-│  │ Auth (OIDC + │  │ Rules CRUD │  │ Submissions  │  │ AI RAG Engine        │  │
-│  │ JWT)         │  │ + Redis    │  │ + pgvector   │  │ (Groq Llama 3.3-70B) │  │
-│  └──────────────┘  └────────────┘  └─────────────┘  └──────────────────────┘  │
-│  ┌────────────────────────────────────────────────────────────────────────────┐ │
-│  │  Automation: Resend Email (PDF attached) + Twilio WhatsApp + Sentry        │ │
-│  └────────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────────┘
-           │                                           │
-           ▼                                           ▼
-┌─────────────────────┐                   ┌─────────────────────┐
-│  Supabase Postgres  │                   │  Upstash Redis      │
-│  (submissions,      │                   │  (rules cache,      │
-│   rules, counselors │                   │   rate limiting)    │
-│   + pgvector)       │                   └─────────────────────┘
-└─────────────────────┘
-```
+## 2. Introduction
+The student admissions process in modern institutions is fraught with two primary challenges: **Data Entry Integrity** and **Auditability**. Conventional systems rely on post-facto verification, which is both slow and prone to oversight. AdmitGuard addresses these by implementing a **"Governance-at-the-Source"** model. This framework ensures that any deviation from predetermined academic or institutional criteria is flagged instantly and requires a human-provided, AI-audited rationale for submission.
 
 ---
 
-## 🧩 Component Breakdown
+## 3. System Architecture & Methodology
+AdmitGuard is architected as a three-tier distributed system comprising an Edge Client, a Vectorized Backend, and an Oversight Dashboard.
 
-### 1. 🔌 Chrome Extension (Edge Engine)
+### 3.1 The Edge Client (Chrome Extension)
+The client-side engine is responsible for real-time validation. It operates on two distinct logical planes:
+*   **Hard-Rule Plane (Strict Validation)**: Uses deterministic algorithms to prevent non-compliant data from being submitted.
+*   **Soft-Rule Plane (Conditional Exception)**: Dynamically evaluates candidate profiles against cloud-synchronized rules (Age, GPA, Graduation Year). If a "soft violation" occurs, a state-machine prevents submission until a valid **Exception Rationale** is provided.
 
-The browser extension is the **point-of-entry governance layer**. It runs entirely inside the officer's browser.
-
-**Key Features:**
-- **Counselor Login**: Staff authenticate via username/password against the backend JWT system. No Google login required at the edge.
-- **11-Field Admission Form**: Name, Email, Phone, Aadhaar, Age, Qualification, Graduation Year, Percentage/CGPA, Screening Score, Interview Status, Offer Letter
-- **Hard Rule Enforcement**: Name format, email regex + uniqueness, phone pattern, Aadhaar Verhoeff checksum, Interview Rejection block
-- **Soft Rule Exceptions**: Age, Grad Year, Percentage/CGPA, Screening Score violations trigger an optional exception toggle with a keyword-validated rationale input
-- **Real-time Rule Sync**: Socket.io client connects to the backend. When an admin updates rules, the extension updates instantly without a page reload
-- **Auto-save Drafts**: Form state persisted to `chrome.storage.local` every 3 seconds
-- **Audit Log**: A dedicated `audit.html` page shows all local submissions with search, filter, and CSV export
-- **Remote Submission**: Submissions are pushed to the backend with a `Bearer` JWT token
-
-**Submission Flow:**
-```
-Data Entry
-    ↓
-Hard Rules (Name, Email, Phone, Aadhaar, Interview)
-    ↓ PASS
-Soft Rules (Age, GPA, Grad Year, Score)
-    ↓ VIOLATION? → Enable Exception Toggle
-        ↓ YES (Exception Active + Valid Rationale)
-        Submit as FLAGGED
-    ↓ PASS (No Exception)
-    Submit as CLEAN
-```
+### 3.2 Managerial Oversight & Advanced Analytics Interface (Admin Dashboard)
+A centralized command-and-control dashboard structured to facilitate high-resolution auditing and decision-making. 
+*   **Granular PII Masking Architecture**: To maintain GDPR and institutional data privacy compliance, the interface implements a one-click **PII Layer** that dynamically masks sensitive identifying fields (Email, Aadhaar, Phone) during the initial audit phase.
+*   **Operational Pipeline Management**: Implements a state-machine driven **Pipeline View** (Kanban style). It allows managers to visually transition candidates between `Pending`, `Flagged`, `Approved`, and `Rejected` statuses, ensuring zero-loss pipeline visibility.
+*   **Real-time Intelligence Integration**: Directly interfaces with the **Groq-powered RAG engine**, providing an interactive sidebar where managers can ask complex structural questions like *"Identify all 2024 graduates with inconsistent screening scores"* and receive immediate, linked profile recommendations.
+*   **Adaptive Rule Sculpting**: Enables managers to modify institutional criteria (thresholds, keyword requirements, checksum toggles) instantly. These changes are versioned and propagated to all Edge Clients upon their next polling cycle.
 
 ---
 
-### 2. 🖥️ Admin Dashboard (Command Center)
+## 4. Data Integrity & Algorithms
+AdmitGuard employs sophisticated mathematical models to ensure data validity.
 
-A standalone web app (hosted on **Vercel**) secured behind **Google OAuth 2.0**.
+### 4.1 Verhoeff Error Detection
+To combat identity document fraud (e.g., Aadhaar entry), the framework implements the **Verhoeff Algorithm**. Unlike simple modulo-based checks, Verhoeff uses a non-commutative group $D_5$ (Dihedral group of order 10).
+*   **Permutation Table**: Rotates digits to catch transcription errors.
+*   **D5 Multiplication**: Ensures that single-digit errors and most adjacent transposition errors are detected.
 
-**Key Features:**
-- **Google OAuth 2.0**: Admin login via Google identity. Token verified server-side using OIDC. Zero-trust email whitelist enforced via `ADMIN_EMAILS` env variable.
-- **Real-time WebSocket Feed**: Dashboard auto-updates on `new_submission` and `decision_updated` socket events without manual refresh
-- **Submission Table**: Searchable, filterable table with inline `APPROVE` / `REJECT` actions. Optimistic UI updates (instant visual change, rollback on error).
-- **PII Masking**: One-click toggle masks email and name fields for privacy compliance during initial audits
-- **Pipeline View (Kanban)**: Visual state-machine showing candidates in `Pending`, `Flagged`, `Approved`, `Rejected` columns
-- **Audit Log View**: Full chronological log of all submissions with search
-- **Bulk Actions**: Select multiple candidates and bulk approve/reject
-- **AI Assistant (RAG)**: Chat sidebar powered by Groq Llama 3.3-70B. Answers quantitative queries (generates SQL) and qualitative queries (runs pgvector similarity search)
-- **Rule Management**: Admins can edit all thresholds, keywords, and flags. Changes are instantly broadcast to all connected extensions via Socket.io
-- **Staff Management**: Create/remove counselor accounts, view per-counselor stats (submissions, approvals, flags), generate and copy credentials
+### 4.2 Dynamic Rule Synchronization
+The system uses a polling-and-cache mechanism to ensure that the Edge Client always has the latest institutional criteria. Rules are stored in the backend as `JSONB` structures, allowing for field-level flexibility without schema migrations.
 
 ---
 
-### 3. 🔧 Backend API (`admitguard-backend/`)
+## 5. AI & Semantic Reasoning Engine
+The core intelligence of AdmitGuard is built upon a **Retrieval-Augmented Generation (RAG)** pipeline.
 
-Node.js + Express server with Socket.io, deployed on **Render** via Docker.
+### 5.1 Rationale Vectorization
+When an officer provides a justification for a rule exception, the string is processed through the **Xenova `all-MiniLM-L6-v2`** model. This generates a 384-dimensional dense vector representing the "semantic weight" of the justification.
+$$v = \text{Embed}(\text{Rationale})$$
+These vectors are stored in a **PostgreSQL `vector`** column, allowing for cosine similarity queries.
 
-**Endpoints:**
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/api/auth/login` | Public | Counselor JWT login |
-| `GET` | `/api/rules` | Public | Get current rules (Redis cached) |
-| `PUT` | `/api/rules` | Google OAuth | Update rules + broadcast via Socket |
-| `POST` | `/api/submissions` | Counselor JWT | Create submission + trigger automations |
-| `GET` | `/api/submissions` | Google OAuth / JWT | List all submissions |
-| `PATCH` | `/api/submissions/:id/decision` | Google OAuth | Approve/Reject + notify |
-| `DELETE` | `/api/submissions` | Google OAuth | Clear all submissions |
-| `POST` | `/api/analyze` | Google OAuth | AI RAG query (Groq + pgvector) |
-| `GET` | `/api/admin/counselors` | Google OAuth | List counselors |
-| `POST` | `/api/admin/counselors` | Google OAuth | Create counselor account |
-| `DELETE` | `/api/admin/counselors/:id` | Google OAuth | Remove counselor |
-| `GET` | `/api/admin/stats/counselors` | Google OAuth | Per-counselor analytics |
-| `GET` | `/health` | Public | Health check |
-
-**Database Schema (Supabase PostgreSQL):**
-```sql
--- Counselors (staff accounts)
-counselors(id, name, username, password [bcrypt], created_at)
-
--- Submissions
-submissions(
-  id, candidate_id [unique], timestamp,
-  flagged, exceptions_used[], fields [JSONB],
-  rationale [JSONB], decision, counselor_id,
-  rationale_vector [vector(384)]  ← pgvector
-)
-
--- Rules
-rules(id, config [JSONB], updated_at)
-```
+### 5.2 Multi-Stage AI Reasoning (Groq Llama 3)
+The AI Assistant (`/api/analyze`) uses a specialized agentic workflow to answer manager queries:
+1.  **Intent Classification**: The agent analyzes if the user is asking for **Quantitative** (e.g., "Top 5 scores") or **Qualitative** (e.g., "Trends in grad year waivers") data.
+2.  **Query Generation**:
+    *   **SQL Generation**: For quantitative queries, the AI writes and executes PostgreSQL queries against the JSONB fields.
+    *   **Vector Search**: For qualitative queries, it performs a similarity search ($1 - \text{cosine\_distance}$) to retrieve the most semantically relevant candidate files.
+3.  **Synthesis**: The final response combines raw numerical data with latent pattern recognition (e.g., *"There is a 30% increase in GPA waivers for 2024 graduates, suggesting the current threshold may be statistically too high"*).
 
 ---
 
-## 🤖 AI & Semantic Reasoning Engine
+## 6. Authentication & Identity Governance
+To ensure institutional record-keeping is protected from unauthorized access, AdmitGuard implements a **Public Intake, Private Audit** security model:
 
-### RAG Pipeline (Retrieval-Augmented Generation)
-
-When a manager asks a natural language question in the dashboard:
-
-1. **Intent Classification** (Groq Llama 3): Determines if query is **quantitative** (generate SQL) or **qualitative** (semantic search)
-2. **Query Execution**:
-   - **SQL Path**: AI writes and executes a PostgreSQL query on the JSONB fields, returns exact data
-   - **Vector Path**: Uses `Xenova/all-MiniLM-L6-v2` (384-dim) to embed the query, then runs cosine similarity search via pgvector `<=>` operator against stored rationale vectors
-3. **Answer Synthesis**: Final Groq call combines raw results + semantic patterns into a professional analytical response
-
-```
-Manager Query → AI Planner (Groq)
-                    ↓               ↓
-               SQL Generator    Vector Search (pgvector)
-                    ↓               ↓
-                    └───── Merge ────┘
-                               ↓
-                    Synthesized AI Response
-```
-
-### Rationale Vectorization
-
-Every exception rationale submitted by a counselor is embedded via `Xenova/all-MiniLM-L6-v2` and stored as a `vector(384)` in PostgreSQL. This enables semantic search across the entire exception history.
+*   **Google OAuth 2.0 Integration**: The Admin Dashboard requires a valid Google Identity token to initialize. Sessions are cryptographically verified using Google's OpenID Connect (OIDC) protocol.
+*   **Zero-Trust Whitelisting**: Access to the core data APIs (Rules, Analysis, Pipeline) is restricted to pre-authorized administrator emails managed via secure environment variables (`ADMIN_EMAILS`).
+*   **Hybrid Endpoint Access**: 
+    *   **Ingress (Public)**: The `POST /api/submissions` endpoint is open to allow seamless data intake from the distributed browser extensions.
+    *   **Egress (Secured)**: All diagnostic, analytics, and decision-making endpoints require a valid Bearer token, preventing data exfiltration even if the API endpoint is publicly discovered.
 
 ---
 
-## 🔐 Security Model
+## 7. Deployment & Distributed Cloud Topology
 
-| Layer | Mechanism | Scope |
-|-------|-----------|-------|
-| Extension Login | Username/Password → JWT (7-day) | Counselors only |
-| Submission API | Bearer JWT validation | `POST /api/submissions` |
-| Admin Dashboard | Google OAuth 2.0 (OIDC) | All admin endpoints |
-| Email Whitelist | `ADMIN_EMAILS` + `OFFICER_EMAILS` env vars | Zero-trust allowlist |
-| Aadhaar Validation | Verhoeff Algorithm (Dihedral group D₅) | Client-side hard rule |
+To ensure institutional-grade availability and low-latency inference, AdmitGuard implements a multi-cloud distribution strategy:
 
-**Public Endpoints**: `GET /api/rules`, `POST /api/auth/login`, `GET /health`  
-**All other endpoints**: Require Google OAuth Bearer token or Counselor JWT
+### 🗺️ Infrastructure Stack
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white) 
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Upstash](https://img.shields.io/badge/Upstash-00E9A3?style=for-the-badge&logo=upstash&logoColor=white)
 
----
-
-## 📬 Automation Pipeline
-
-When specific events occur, the backend automatically:
-
-| Event | WhatsApp (Twilio) | Email (Resend) |
-|-------|-------------------|----------------|
-| Submission received | ✅ Receipt message | ✅ Confirmation email |
-| Decision = Approved | ✅ Congratulations | ✅ Email + **PDF Admission Letter** |
-| Decision = Rejected | ✅ Rejection message | — |
-
-The **PDF Admission Letter** is generated on-the-fly using PDFKit with:
-- Branded header, watermark, official letter body
-- Student details (name, email, qualification, intake year, screening score)
-- Digital signature block
-- Attached to the approval email via Resend
+*   **Persistence Layer (Supabase)**: The PostgreSQL instance, along with the `pgvector` semantic store, is hosted on **Supabase**. This provides high-performance vectorized operations with integrated connection pooling and real-time data synchronization.
+*   **Application Compute (Render)**: The Node.js/Express.js backend resides on **Render**, serving as the secure orchestrator between client requests, database transactions, and high-speed external APIs.
+*   **Global Caching (Upstash Redis)**: Low-latency rule delivery and rate-limiting are handled by **Upstash Redis**, ensuring the Edge Client receives governance updates in <10ms.
+*   **Managerial Portal (Vercel)**: The Administrative Dashboard (Frontend) is distributed via **Vercel's global CDN**, ensuring instantaneous loading of candidate pipelines and analytics.
+*   **Governance Edge (Chrome Web Store)**: The browser extension is distributed as a hardened package, enabling localized rule enforcement directly within the officer's browser environment.
 
 ---
 
-## ⚡ Real-Time WebSocket Events
+## 8. Logic Flow & State Diagrams
 
-Socket.io powers live sync between all connected clients:
-
-| Event | Emitted When | Effect |
-|-------|-------------|--------|
-| `new_submission` | Counselor submits form | Dashboard table updates instantly |
-| `decision_updated` | Manager approves/rejects | Extension gets live decision status |
-| `rules_updated` | Admin saves rule changes | All extensions reload rules live |
-
----
-
-## 🗺️ Deployment Architecture
-
-| Component | Platform | Notes |
-|-----------|----------|-------|
-| Backend API + WebSockets | **Render** (Docker) | Node 18, auto-scaled |
-| Admin Dashboard | **Vercel** | Global CDN |
-| Database + pgvector | **Supabase** | PostgreSQL with connection pooling |
-| Rules Cache | **Upstash Redis** | <10ms latency, LRU eviction, 24hr TTL |
-| Error Monitoring | **Sentry** | Full stack traces + profiling |
-
----
-
-## 🏗️ Data Integrity Algorithms
-
-### Verhoeff Algorithm (Aadhaar Checksum)
-Detects single-digit errors and adjacent transpositions using the non-commutative Dihedral group D₅. Implemented in pure JavaScript in the extension without any network round-trip.
-
-```
-validate(aadhaar) → Uses d[5][5] multiplication table + p[8][10] permutation table
-→ Result must equal 0 for valid number
-```
-
-### Dynamic Rule Synchronization
-1. Rules stored as `JSONB` in PostgreSQL (no schema migrations needed for rule changes)
-2. Cached in Upstash Redis with 24-hour TTL
-3. Cache invalidated on `PUT /api/rules`
-4. Socket.io broadcasts new rules to all connected extension clients instantly
-
----
-
-## 🖥️ Submission Validation Logic
-
+### 8.1 Submission Validation Flow
 ```mermaid
 graph TD
     A[Data Entry] --> B{Hard Rules?}
@@ -311,6 +137,7 @@ graph TD
     D -- PASS --> I[Submit as CLEAN]
 ```
 
+### 8.2 AI RAG Pipeline
 ```mermaid
 graph LR
     A[Manager Query] --> B[AI Planner]
@@ -323,120 +150,27 @@ graph LR
 
 ---
 
-## 🛠️ Local Development Setup
+## 10. Automated Communication & Notification Pipeline
 
-### Backend
-```bash
-cd admitguard-backend
-npm install
+AdmitGuard bridges the gap between institutional decisions and student awareness through an automated **Twilio WhatsApp Pipeline**.
 
-# Create .env with:
-# DATABASE_URL=<supabase postgres connection string>
-# REDIS_URL=<upstash redis url>
-# GROQ_API_KEY=<groq key>
-# SENTRY_DSN=<sentry dsn>
-# JWT_SECRET=<any secret string>
-# ADMIN_EMAILS=your@email.com
-# TWILIO_SID=<twilio sid>        (optional)
-# TWILIO_TOKEN=<twilio token>    (optional)
-# RESEND_API_KEY=<resend key>    (optional)
-
-npm run dev   # nodemon server.js
-```
-
-### Chrome Extension
-1. Open `chrome://extensions`
-2. Enable **Developer Mode**
-3. Click **Load Unpacked** → select the root `AdmitGuard/` folder
-4. Update `rules.json` → `api_url` to point to your running backend
-5. Click the AdmitGuard icon in the toolbar
-
-### Admin Dashboard
-Open `admin/index.html` directly in a browser, or deploy to Vercel. The backend URL is hardcoded in `admin.js` (`fallbackUrl`).
-
-### Docker (Production)
-```bash
-cd admitguard-backend
-docker build -t admitguard-backend .
-docker run -p 3000:3000 --env-file .env admitguard-backend
-```
+*   **Submission Receipts**: Instant confirmation messages are dispatched the moment a candidate triggers the Edge Engine, reducing candidate anxiety and support volume.
+*   **Decision Triggers**: When a manager clicks "Approve" or "Reject" on the Command Center, a background task generates a personalized WhatsApp notification reflecting the specific outcome.
+*   **Async Processing**: All notifications are processed asynchronously to ensure that the Managerial Dashboard remains highly responsive even during high-volume notification bursts.
 
 ---
 
-## 🗝️ Environment Variables
+## 11. Monitoring & Enterprise Observability
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | ✅ | Supabase/PostgreSQL connection string |
-| `REDIS_URL` | ✅ | Upstash Redis URL |
-| `GROQ_API_KEY` | ✅ | Groq API key for Llama 3 |
-| `JWT_SECRET` | ✅ | Secret for counselor JWT signing |
-| `ADMIN_EMAILS` | ✅ | Comma-separated admin Google emails |
-| `SENTRY_DSN` | ✅ | Sentry error tracking DSN |
-| `OFFICER_EMAILS` | ⚠️ | Optional: extra whitelisted officer emails |
-| `TWILIO_SID` | ⚠️ | Twilio account SID (WhatsApp optional) |
-| `TWILIO_TOKEN` | ⚠️ | Twilio auth token |
-| `RESEND_API_KEY` | ⚠️ | Resend email API key (optional) |
-| `PORT` | auto | Set by Render automatically |
+To ensure institutional-grade uptime, AdmitGuard implements a two-tier observability stack:
+
+*   **Real-time Error Tracking (Sentry)**: Every backend exception, AI reasoning failure, or database timeout is captured by **Sentry**. This provides developers with deep stack-traces and candidate context to resolve production issues before they affect the intake pipeline.
+*   **Low-Latency Caching (Redis)**: Utilizing the **Least Recently Used (LRU)** eviction policy, Upstash Redis caches institutional rules and AI insights. This prevents "Database Bottlenecks" during peak admission cycles and ensures the system remains "snappy" even under heavy load.
 
 ---
 
-## 📊 Default Rules Configuration
-
-The system seeds with these defaults (all configurable live from the dashboard):
-
-| Rule | Default | Type |
-|------|---------|------|
-| Age | 18 – 35 | Soft |
-| Graduation Year | 2015 – 2025 | Soft |
-| Min Percentage | 60% | Soft |
-| Min CGPA | 6.0 | Soft |
-| Screening Score | 40 – 100 | Soft |
-| Exception Limit | 2 (before FLAGGED) | Compliance |
-| Rationale Min Length | 30 chars | Compliance |
-| Exception Keywords | "approved by", "special case", "documentation pending", "waiver granted" | Compliance |
-| Aadhaar Checksum | Enabled | Hard |
-| Email Whitelist | Empty (all domains) | Hard |
-| PII Masking | Enabled | Dashboard |
-| Auto-save Draft | Enabled (3s interval) | UX |
+## 12. Conclusions
+AdmitGuard represents a shift in admissions technology from passive record-keeping to **active, automated governance**. By combining deterministic algorithms like Verhoeff with stochastic AI models like Llama 3 and real-time triggers via Twilio/Redis, the framework provides a "Human-in-the-Loop" system that is both rigid in its compliance and frictionless in its communication.
 
 ---
-
-## 📋 Sprint History
-
-| Sprint | Features Delivered |
-|--------|-------------------|
-| 0 | Repo setup, manifest.json MV3, rules.json, research |
-| 1 | 11-field popup form, dark theme, strict validators |
-| 2 | Soft rules, exception toggle, keyword chips, rationale validation |
-| 3 | Configurable rules engine, audit log with persistence & CSV export |
-| 4 | UI polish, flag indicator, success overlay, full submission test |
-| 5 | Backend (Node/Express), Supabase PostgreSQL, REST API |
-| 6 | Admin dashboard (Google OAuth, pipeline view, PII masking) |
-| 7 | AI RAG Engine (Groq Llama 3, pgvector, semantic search) |
-| 8 | Redis caching, Sentry monitoring, Upstash integration |
-| 9 | Twilio WhatsApp automation, Resend email + PDFKit admission letters |
-| 10 | Socket.io real-time sync (extension ↔ dashboard ↔ backend) |
-| 11 | Counselor/Staff system (JWT auth, creation, stats, credential sharing) |
-| 12 | Dockerization, Render deployment, E2E testing |
-
----
-
-## 🧪 Testing
-
-Playwright E2E test suite covers:
-- Clean submission flow (all rules pass)
-- Hard rule violation (Aadhaar checksum fail, phone format)
-- Soft rule exception (GPA waiver with valid rationale)
-- Flagged submission (>2 exceptions)
-- Admin dashboard deployment integrity (Vercel)
-
----
-
-## 📚 Conclusions
-
-AdmitGuard represents a shift in admissions technology from passive record-keeping to **active, automated governance**. By combining deterministic algorithms like Verhoeff with stochastic AI models like Llama 3 and real-time triggers via Twilio/Redis/Socket.io, the framework provides a **Human-in-the-Loop** system that is both rigid in its compliance and frictionless in its communication.
-
----
-
-*Technical Documentation for AdmitGuard — Full-Stack Distributed Admissions Governance System*
+*Technical Documentation & Research Report for the AdmitGuard Project.*
