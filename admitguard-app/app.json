@@ -20,6 +20,11 @@
     },
     "plugins": [
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4b23c678-3799-468f-b45d-a247badba470"
+      }
+    }
   }
 }
