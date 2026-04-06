@@ -56,6 +56,12 @@ function initSocket() {
 
   socket.on('connect', () => {
     console.log('🛡️ Socket Connected: Real-time sync ACTIVE');
+    
+    // Authenticate to join the counselor-specific room
+    if (TOKEN) {
+      socket.emit('authenticate', { token: TOKEN, type: 'counselor' });
+    }
+
     const badge = document.getElementById('liveBadge');
     if (badge) badge.style.display = 'flex';
   });

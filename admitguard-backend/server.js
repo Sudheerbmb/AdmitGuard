@@ -32,6 +32,26 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
   cors: { origin: "*", methods: ["GET", "POST", "PATCH"] }
 });
+
+io.on('connection', (socket) => {
+  socket.on('authenticate', (data) => {
+    const { token, type } = data;
+    if (type === 'counselor' && token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        socket.join(`counselor_${decoded.id}`);
+        console.log(`🛡️ Socket: Counselor ${decoded.name} connected to private room`);
+      } catch (e) {
+        console.error('Socket Auth Error (Counselor):', e.message);
+      }
+    } else if (type === 'admin') {
+      // In a real app, we'd verify the Google token here. 
+      // For now, we allow joining the admin room if type is 'admin'.
+      socket.join('admins');
+      console.log('🛡️ Socket: Admin connected to global stream');
+    }
+  });
+});
 const port = process.env.PORT || 3000;
 const client = new OAuth2Client("436650604205-ifoim7stupnfpp80u5ha2u2f6nouts5v.apps.googleusercontent.com");
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -443,14 +463,25 @@ app.put('/api/rules', async (req, res) => {
 
 app.get('/api/submissions', async (req, res) => {
   try {
-    const result = await pool.query(`
+    let query = `
         SELECT s.*, c.name as counselor_name 
         FROM submissions s 
         LEFT JOIN counselors c ON s.counselor_id = c.id 
-        ORDER BY s.timestamp DESC
-    `);
+    `;
+    let values = [];
+
+    // Filter by counselor_id if it's a counselor (JWT) and not a Google Admin
+    if (req.counselor && (!req.user || !req.user.email)) {
+      query += ` WHERE s.counselor_id = $1 `;
+      values.push(req.counselor.id);
+    }
+
+    query += ` ORDER BY s.timestamp DESC `;
+    
+    const result = await pool.query(query, values);
     res.json(result.rows || []);
   } catch (err) {
+    console.error('Fetch error:', err);
     res.status(500).json({ error: 'Failed to fetch' });
   }
 });
@@ -494,7 +525,8 @@ app.post('/api/submissions', async (req, res) => {
     sendEmailNotification(sub, 'received');
 
     // 📣 SOCKET UPDATE: Real-time dashboard notification
-    io.emit('new_submission', sub);
+    // Emit only to this counselor's room AND the admins
+    io.to(`counselor_${counselor_id}`).to('admins').emit('new_submission', sub);
 
     res.status(201).json(sub);
   } catch (err) {
@@ -524,7 +556,12 @@ app.patch('/api/submissions/:candidate_id/decision', async (req, res) => {
       if (decision === 'approved') sendEmailNotification(sub, 'approved');
       
       // 📣 SOCKET UPDATE: Real-time decision sync
-      io.emit('decision_updated', { candidate_id, decision });
+      // Emit to that counselor's room and all admins
+      if (sub.counselor_id) {
+        io.to(`counselor_${sub.counselor_id}`).to('admins').emit('decision_updated', { candidate_id, decision });
+      } else {
+        io.to('admins').emit('decision_updated', { candidate_id, decision });
+      }
     }
 
     res.json(sub);

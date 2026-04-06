@@ -143,7 +143,12 @@ function initSocket() {
   if (!RULES.api_url || RULES.api_url === 'YOUR_DEPLOYED_BACKEND_URL_HERE') return;
   const socket = io(RULES.api_url);
   
-  socket.on('connect', () => console.log('🛡️ Popup Socket Connected'));
+  socket.on('connect', () => {
+    console.log('🛡️ Popup Socket Connected');
+    if (TOKEN) {
+      socket.emit('authenticate', { token: TOKEN, type: 'counselor' });
+    }
+  });
 
   socket.on('rules_updated', (newRules) => {
     console.log('🛡️ Real-time Update: Rules changed');

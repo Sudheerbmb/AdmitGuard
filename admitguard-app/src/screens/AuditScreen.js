@@ -124,17 +124,7 @@ export default function AuditScreen() {
           <Text style={styles.timestamp}>{new Date(sub.timestamp).toLocaleDateString()}</Text>
         </View>
 
-        {/* Action Buttons for pending */}
-        {sub.decision === 'pending' && (
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.approveBtn} onPress={() => handleDecision(sub.id, 'approved')}>
-              <Text style={styles.approveBtnText}>✓ APPROVE</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.rejectBtn} onPress={() => handleDecision(sub.id, 'rejected')}>
-              <Text style={styles.rejectBtnText}>✕ REJECT</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Card bottom footer */}
       </TouchableOpacity>
     );
   };
@@ -219,16 +209,7 @@ export default function AuditScreen() {
               </>
             )}
 
-            {sub.decision === 'pending' && (
-              <View style={styles.modalActionRow}>
-                <TouchableOpacity style={styles.approveBtn} onPress={() => handleDecision(sub.id, 'approved')}>
-                  <Text style={styles.approveBtnText}>✓ APPROVE</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.rejectBtn} onPress={() => handleDecision(sub.id, 'rejected')}>
-                  <Text style={styles.rejectBtnText}>✕ REJECT</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            {/* Removal of management actions for counselor */}
           </ScrollView>
         </View>
       </Modal>

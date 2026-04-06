@@ -917,6 +917,10 @@ function initSocket() {
 
   socket.on('connect', () => {
     console.log('🛡️ WebSockets: CONNECTED to Backend');
+    
+    // Authenticate as Admin to stay in the global stream
+    socket.emit('authenticate', { type: 'admin' });
+
     const status = document.getElementById('backendStatus');
     if (status) {
       status.textContent = 'LIVE (Real-time)';
