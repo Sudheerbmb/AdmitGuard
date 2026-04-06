@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <canvas id="canvas" width="1024" height="1024"></canvas>
+    <div id="output" style="word-break: break-all; font-family: monospace;"></div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Draw Dark Background
+        ctx.fillStyle = '#0d0f14';
+        ctx.fillRect(0, 0, 1024, 1024);
+
+        // Draw Shield
+        ctx.save();
+        ctx.translate(512, 512);
+        ctx.beginPath();
+        const size = 350;
+        ctx.moveTo(0, -size);
+        ctx.lineTo(size * 0.86, -size * 0.5);
+        ctx.lineTo(size * 0.86, size * 0.5);
+        ctx.lineTo(0, size);
+        ctx.lineTo(-size * 0.86, size * 0.5);
+        ctx.lineTo(-size * 0.86, -size * 0.5);
+        ctx.closePath();
+
+        // Stroke Shield
+        ctx.lineWidth = 20;
+        ctx.strokeStyle = '#00e5ff';
+        ctx.shadowBlur = 40;
+        ctx.shadowColor = '#00e5ff';
+        ctx.stroke();
+
+        // Draw Text
+        ctx.font = 'bold 300px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#00e5ff';
+        ctx.fillText('AG', 0, 0);
+        ctx.restore();
+
+        // Output as Base64 (remove the prefix)
+        const dataUrl = canvas.toDataURL('image/png').split(',')[1];
+        document.getElementById('output').innerText = dataUrl;
+    </script>
+</body>
+</html>
