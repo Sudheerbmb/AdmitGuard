@@ -19,7 +19,7 @@
       if (headerRight) {
         const profileDiv = document.createElement('div');
         profileDiv.style.display = 'flex';
-        profileDiv.style.alignment = 'center';
+        profileDiv.style.alignItems = 'center';
         profileDiv.style.gap = '12px';
         profileDiv.style.marginRight = '20px';
         profileDiv.innerHTML = `

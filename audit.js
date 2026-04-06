@@ -191,11 +191,16 @@ async function makeDecision(candidateId, status) {
   try {
     const res = await fetch(`${RULES.api_url}/api/submissions/${candidateId}/decision`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {})
+      },
       body: JSON.stringify({ decision: status })
     });
     if (res.ok) loadSubmissions();
-  } catch (e) { alert('Failed to update decision.'); }
+    else if (res.status === 401 || res.status === 403) alert('Permission denied. Admin required.');
+    else alert('Failed to update decision.');
+  } catch (e) { alert('Failed to update decision. Check backend connection.'); }
 }
 
 function renderTable() {
@@ -272,8 +277,12 @@ function exportCSV() {
 }
 
 async function clearAll() {
-  if (!confirm('Clear all?')) return;
-  if (RULES.api_url) await fetch(`${RULES.api_url}/api/submissions`, { method: 'DELETE' });
+  if (!confirm('Clear all local data? (Backend data requires admin dashboard to delete.)')) return;
+  // NOTE: DELETE /api/submissions requires Google Admin OAuth — use the admin dashboard instead.
+  // We only clear local chrome storage here.
+  try {
+    await chrome.storage.local.remove('admitguard_submissions');
+  } catch (_) {}
   allSubmissions = [];
   updateDashboard();
 }

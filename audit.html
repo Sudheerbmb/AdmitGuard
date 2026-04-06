@@ -206,6 +206,7 @@
     .badge.rejected { background: rgba(255,75,110,0.15); color: var(--error); border: 1px solid var(--error); }
     .badge.pending { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
 
+    .badge.ok { background: rgba(0,230,118,0.15); color: var(--success); border: 1px solid rgba(0,230,118,0.4); }
     .action-group { display: flex; gap: 4px; }
     .action-btn {
       padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);
@@ -299,7 +300,7 @@
     </div>
   </div>
   <div class="header-actions" style="align-items: center;">
-    <div class="live-badge" id="liveBadge">
+    <div class="live-badge" id="liveBadge" style="display:none">
       <div class="pulse-dot"></div>
       <span>Live Sync</span>
     </div>

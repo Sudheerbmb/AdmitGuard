@@ -298,7 +298,7 @@ const inv = [0, 4, 3, 2, 1, 5, 6, 7, 8, 9];
 
 function validateVerhoeff(array) {
   let c = 0;
-  let invertedArray = array.reverse();
+  let invertedArray = [...array].reverse();
   for (let i = 0; i < invertedArray.length; i++) {
     c = d[c][p[i % 8][invertedArray[i]]];
   }
