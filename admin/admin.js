@@ -110,7 +110,8 @@ async function loadSubmissions() {
         exceptions_used: row.exceptions_used || [],
         fields: typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields,
         rationale: typeof row.rationale === 'string' ? JSON.parse(row.rationale) : row.rationale,
-        decision: row.decision || 'pending'
+        decision: row.decision || 'pending',
+        counselor_name: row.counselor_name || null
       }));
       status.textContent = 'CONNECTED';
       status.style.color = 'var(--success)';
@@ -217,7 +218,15 @@ function renderTable() {
           <div>${sanitize(maskedName)}</div>
           <div class="candidate-id">${sanitize(maskedEmail)}</div>
         </td>
-        <td><span style="font-size:11px; color:var(--accent);">${sanitize(sub.counselor_name || 'System')}</span></td>
+        <td>
+          ${sub.counselor_name
+            ? `<div style="display:flex; align-items:center; gap:6px;">
+                <span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#000; font-size:10px; font-weight:700; flex-shrink:0;">${sanitize(sub.counselor_name[0].toUpperCase())}</span>
+                <span style="font-size:12px; font-weight:600; color:var(--text);">${sanitize(sub.counselor_name)}</span>
+              </div>`
+            : `<span style="font-size:11px; color:var(--muted); font-style:italic;">— System —</span>`
+          }
+        </td>
         <td><span class="badge ${statusClass}">${statusText}</span></td>
         <td>${sub.exceptions_used.length} Rules</td>
         <td style="max-width: 200px">
@@ -386,6 +395,19 @@ function showDetails(id) {
   if (!sub) return;
 
   const html = `
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:14px;">
+      <div style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--accent); color:#000; font-size:15px; font-weight:700; flex-shrink:0;">
+        ${sanitize((sub.counselor_name || 'S')[0].toUpperCase())}
+      </div>
+      <div>
+        <div style="font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase;">Enrolled By</div>
+        <div style="font-size:15px; font-weight:700; color:var(--text); margin-top:2px;">${sanitize(sub.counselor_name || 'System / Unknown')}</div>
+      </div>
+      <div style="margin-left:auto; text-align:right;">
+        <div style="font-size:10px; color:var(--muted);">Submitted</div>
+        <div style="font-size:12px; color:var(--text); margin-top:2px;">${new Date(sub.timestamp).toLocaleString()}</div>
+      </div>
+    </div>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
       <div>
         <h4 style="color:var(--accent); margin-bottom:12px;">Candidate Identity</h4>
@@ -911,7 +933,8 @@ function initSocket() {
       exceptions_used: sub.exceptions_used || [],
       fields: typeof sub.fields === 'string' ? JSON.parse(sub.fields) : sub.fields,
       rationale: typeof sub.rationale === 'string' ? JSON.parse(sub.rationale) : sub.rationale,
-      decision: sub.decision || 'pending'
+      decision: sub.decision || 'pending',
+      counselor_name: sub.counselor_name || null
     };
     if (!allSubmissions.some(s => s.id === normalizedSub.id)) {
       allSubmissions.unshift(normalizedSub);
